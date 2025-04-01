@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 
 const quizCategories = [
@@ -241,15 +241,39 @@ const HomeScreen = () => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
   const [showScore, setShowScore] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(10); 
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+
+  useEffect(() => {
+    // Only run the timer if a quiz is selected and we're not showing feedback
+    if (selectedQuiz && timeLeft > 0 && !showFeedback) {
+      const timer = setTimeout(() => setTimeLeft(timeLeft - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (selectedQuiz && timeLeft === 0) {
+      handleNextQuestion();
+    }
+  }, [timeLeft, showFeedback, selectedQuiz]);
 
   const handleAnswerSelect = (selectedIndex) => {
+    setSelectedOption(selectedIndex);
+    setShowFeedback(true);
+
     if (selectedQuiz.questions[currentQuestion].correct === selectedIndex) {
       setScore(score + 1);
     }
 
+    setTimeout(() => handleNextQuestion(), 2000);
+  };
+
+  const handleNextQuestion = () => {
     const nextQuestion = currentQuestion + 1;
+
     if (nextQuestion < selectedQuiz.questions.length) {
       setCurrentQuestion(nextQuestion);
+      setTimeLeft(10);
+      setSelectedOption(null);
+      setShowFeedback(false);
     } else {
       setShowScore(true);
     }
@@ -260,6 +284,9 @@ const HomeScreen = () => {
     setCurrentQuestion(0);
     setScore(0);
     setShowScore(false);
+    setTimeLeft(10);
+    setSelectedOption(null);
+    setShowFeedback(false);
   };
 
   const renderQuiz = () => {
@@ -279,28 +306,34 @@ const HomeScreen = () => {
     const question = selectedQuiz.questions[currentQuestion];
     return (
       <View style={styles.questionContainer}>
-        <View style={styles.progressBar}>
-          <View 
-            style={[
-              styles.progressFill, 
-              { width: `${((currentQuestion + 1) / selectedQuiz.questions.length) * 100}%` }
-            ]} 
-          />
-        </View>
+        <Text style={styles.timerText}>Time Left: {timeLeft}s</Text>
         <Text style={styles.questionNumber}>
           Question {currentQuestion + 1} of {selectedQuiz.questions.length}
         </Text>
         <Text style={styles.questionText}>{question.question}</Text>
         <View style={styles.optionsContainer}>
-          {question.options.map((option, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.optionButton}
-              onPress={() => handleAnswerSelect(index)}
-            >
-              <Text style={styles.optionText}>{option}</Text>
-            </TouchableOpacity>
-          ))}
+          {question.options.map((option, index) => {
+            let buttonStyle = styles.optionButton;
+
+            if (showFeedback) {
+              if (index === question.correct) {
+                buttonStyle = styles.correctOption;
+              } else if (index === selectedOption && index !== question.correct) {
+                buttonStyle = styles.incorrectOption;
+              }
+            }
+
+            return (
+              <TouchableOpacity
+                key={index}
+                style={buttonStyle}
+                onPress={() => handleAnswerSelect(index)}
+                disabled={showFeedback}
+              >
+                <Text style={styles.optionText}>{option}</Text>
+              </TouchableOpacity>
+            );
+          })}
         </View>
         <TouchableOpacity style={styles.backButton} onPress={resetQuiz}>
           <Text style={styles.backText}>Quit Quiz</Text>
@@ -410,17 +443,6 @@ const styles = StyleSheet.create({
     padding: 20,
     justifyContent: 'center',
   },
-  progressBar: {
-    height: 8,
-    backgroundColor: '#e9ecef',
-    borderRadius: 4,
-    marginBottom: 20,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: '#28a745',
-    borderRadius: 4,
-  },
   questionNumber: {
     fontSize: 16,
     color: '#6c757d',
@@ -467,6 +489,29 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 30,
     color: '#28a745',
+  },
+  correctOption: {
+    backgroundColor: '#28a745',
+    padding: 20,
+    marginVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1c7430',
+  },
+  incorrectOption: {
+    backgroundColor: '#f8d7da',
+    padding: 20,
+    marginVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#f5c6cb',
+  },
+  timerText: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#ffc107',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
 

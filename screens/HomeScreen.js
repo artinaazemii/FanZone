@@ -1,5 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useLayoutEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { signOut } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
+import { useNavigation } from '@react-navigation/native';
+
+
+
 
 const quizCategories = [
   {
@@ -237,6 +243,13 @@ const quizCategories = [
 ];
 
 const HomeScreen = () => {
+  const handleLogout = () => {
+    signOut(auth).catch((error) => {
+      console.error("Error signing out: ", error);
+    });
+  };
+
+  
   const [selectedQuiz, setSelectedQuiz] = useState(null);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [score, setScore] = useState(0);
@@ -343,10 +356,16 @@ const HomeScreen = () => {
   };
 
   return (
+
+    
     <View style={styles.container}>
       {!selectedQuiz ? (
         <ScrollView style={styles.quizListContainer}>
+        <View style={styles.headerContainer}>
           <Text style={styles.headerText}>Football Quiz Challenge</Text>
+          
+        </View>
+      
           {quizCategories.map((category, index) => (
             <View key={index} style={styles.quizCategory}>
               <View style={styles.categoryHeader}>
@@ -513,6 +532,15 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 10,
   },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  
+  
+  
 });
 
 export default HomeScreen;

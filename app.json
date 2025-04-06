@@ -13,10 +13,12 @@
       "backgroundColor": "#ffffff"
     },
     "ios": {
+      "bundleIdentifier": "com.FanZoneApp.myapp",
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
+        "package": "com.FanZoneApp.myapp",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }

@@ -51,40 +51,35 @@ function ShopScreen() {
 export default function Navigation() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
-        tabBarIcon: ({ color, size }) => {
-          let iconName;
-          if (route.name === 'Home') {
-            iconName = 'home';
-          } else if (route.name === 'Chats') {
-            iconName = 'comments';
-          } else if (route.name === 'Score Board') {
-            iconName = 'soccer-ball-o';
-          } else if (route.name === 'Shop') {
-            iconName = 'shopping-cart';
-          }
-          return <FontAwesome name={iconName} size={size} color={color} />;
-        },
-      })}
-    >
-      <Tab.Screen
-        name="Home"
-        component={HomeScreen}
-        options={({ navigation }) => ({
-          headerTitle: () => <CustomHeader />,
-          headerTitleAlign: 'center',
-          headerRight: () => (
-            <TouchableOpacity onPress={handleLogout} style={styles.signOutButton}>
-              <Text style={styles.signOutButtonText}>Sign Out</Text>
-            </TouchableOpacity>
-          ),
-        })}
-      />
-      <Tab.Screen name="Chats" component={ChatScreen} />
-      <Tab.Screen name="Score Board" component={ScoreBoardScreen} />
-      <Tab.Screen name="Shop" component={ShopScreen} />
-    </Tab.Navigator>
-  );
+  screenOptions={({ route }) => ({
+    tabBarIcon: ({ color, size }) => {
+      let iconName;
+      if (route.name === 'Home') {
+        iconName = 'home';
+      } else if (route.name === 'Chats') {
+        iconName = 'comments';
+      } else if (route.name === 'Score Board') {
+        iconName = 'soccer-ball-o';
+      } else if (route.name === 'Shop') {
+        iconName = 'shopping-cart';
+      }
+      return <FontAwesome name={iconName} size={size} color={color} />;
+    },
+    headerTitle: () => <CustomHeader />, // Displays logo on all pages
+    headerTitleAlign: 'center', // Centers the logo in the header
+    headerRight: () => (
+      <TouchableOpacity onPress={handleLogout} style={styles.signOutButton}>
+        <Text style={styles.signOutButtonText}>Sign Out</Text>
+      </TouchableOpacity>
+    ), // Adds Sign Out button to all pages
+  })}
+>
+  <Tab.Screen name="Home" component={HomeScreen} />
+  <Tab.Screen name="Chats" component={ChatScreen} />
+  <Tab.Screen name="Score Board" component={ScoreBoardScreen} />
+  <Tab.Screen name="Shop" component={ShopScreen} />
+</Tab.Navigator>
+  )
 }
 
 const styles = StyleSheet.create({

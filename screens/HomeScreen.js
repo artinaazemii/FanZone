@@ -1,5 +1,7 @@
-import React, { useState, useEffect, useLayoutEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import ProfileIcon from '../screens/ProfileIcon'; // Import the ProfileIcon component
 
 /* Helper function to generate a team quiz with generic questions */
 const createTeamQuiz = (id, name, homeStadium, foundingYear) => ({
@@ -406,6 +408,7 @@ const HomeScreen = () => {
   const [selectedLeague, setSelectedLeague] = useState(null);
   const [selectedTeam, setSelectedTeam] = useState(null);
   const [selectedQuiz, setSelectedQuiz] = useState(null);
+  const navigation = useNavigation();
 
   const handleSelectLeague = (league) => {
     if (league.teams) {
@@ -431,41 +434,26 @@ const HomeScreen = () => {
     }
   };
 
-  return (
+  const navigateToProfile = () => {
+    navigation.navigate('Profile');
+  };
 
-    
+  return (
     <View style={styles.container}>
-      {!selectedQuiz ? (
-        <ScrollView style={styles.quizListContainer}>
-        <View style={styles.headerContainer}>
-          <Text style={styles.headerText}>Football Quiz Challenge</Text>
-          
-        </View>
-      
-          {quizCategories.map((category, index) => (
-            <View key={index} style={styles.quizCategory}>
-              <View style={styles.categoryHeader}>
-                <Text style={styles.categoryTitle}>{category.title}</Text>
-              </View>
-              <View style={styles.quizGrid}>
-                {category.quizzes.map((quiz) => (
-                  <TouchableOpacity
-                    key={quiz.id}
-                    style={styles.quizButton}
-                    onPress={() => setSelectedQuiz(quiz)}
-                  >
-                    <Text style={styles.quizText}>{quiz.league}</Text>
-                    {quiz.questions && (
-                      <Text style={styles.questionCount}>
-                        {quiz.questions.length} Questions
-                      </Text>
-                    )}
-                  </TouchableOpacity>
-                ))}
-              </View>
-            </View>
-          ))}
-        </ScrollView>
+      {/* Header with Profile Icon */}
+      <View style={styles.header}>
+        <Text style={styles.appTitle}>Football Quiz</Text>
+        <TouchableOpacity onPress={navigateToProfile} style={styles.profileIconContainer}>
+          <ProfileIcon size={40} />
+        </TouchableOpacity>
+      </View>
+
+      {selectedTeam ? (
+        <QuizScreen quiz={selectedTeam} onQuit={handleBackFromQuiz} backText="Back to Teams" />
+      ) : selectedLeague ? (
+        <TeamList league={selectedLeague} onSelectTeam={handleSelectTeam} onBack={handleBackFromTeamList} />
+      ) : selectedQuiz ? (
+        <QuizScreen quiz={selectedQuiz} onQuit={handleBackFromQuiz} backText="Back to Categories" />
       ) : (
         <QuizList categories={quizCategoriesData} onSelectLeague={handleSelectLeague} />
       )}
@@ -477,6 +465,22 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fa',
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#007bff',
+    paddingVertical: 15,
+    paddingHorizontal: 20,
+  },
+  appTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#ffffff',
+  },
+  profileIconContainer: {
+    marginLeft: 'auto',
   },
   quizListContainer: {
     flex: 1,
@@ -629,22 +633,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#f5c6cb',
   },
-  timerText: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#ffc107',
-    textAlign: 'center',
-    marginBottom: 10,
-  },
-  headerContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  
-  
-  
 });
 
 export default HomeScreen;

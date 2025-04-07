@@ -1,7 +1,6 @@
-// firebaseConfig.js
-import { initializeApp } from "firebase/app";
-import { getFirestore, setLogLevel } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
+import { initializeApp } from 'firebase/app';
+import { getAuth, setPersistence, browserSessionPersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBDSxr6tcko18OaGKR4FbV22-n-aLHD3VA",
@@ -13,10 +12,16 @@ const firebaseConfig = {
   measurementId: "G-V2EGR13YL8" // mund të qëndrojë këtu, nuk është problem
 };
 
-// Initialize Firebase
 const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const auth = getAuth(app);
 
-// Optional: enable debug logs
-setLogLevel('debug');
+// Set persistence
+setPersistence(auth, browserSessionPersistence)  // Adjust the persistence according to your needs
+  .then(() => {
+    console.log('Persistence set');
+  })
+  .catch((error) => {
+    console.error('Error setting persistence', error);
+  });
+
+export { auth };

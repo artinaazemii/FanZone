@@ -1,10 +1,30 @@
 import React, { useState, useEffect } from 'react';
+import { Alert } from 'react-native';
 import { View, Text, StyleSheet, Image, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { auth } from '../firebaseConfig';
 import { doc, getDoc, getFirestore } from 'firebase/firestore';
 import { signOut } from 'firebase/auth';
+import { sendPasswordResetEmail } from 'firebase/auth';
+
 
 const db = getFirestore();
+
+// change password
+const changePassword = () => {
+  if (!auth.currentUser) {
+    Alert.alert('Error', 'User is not authenticated.');
+    return;
+  }
+
+  sendPasswordResetEmail(auth, auth.currentUser.email)
+    .then(() => {
+      Alert.alert('Success', 'Password reset email sent!');
+    })
+    .catch((error) => {
+      console.error('Error sending password reset email:', error);
+      Alert.alert('Error', error.message);
+    });
+};
 
 const ProfileScreen = () => {
   const [userData, setUserData] = useState(null);
@@ -88,6 +108,10 @@ const ProfileScreen = () => {
           </View>
         )}
       </View>
+
+      <TouchableOpacity style={styles.changePasswordButton} onPress={() =>{ changePassword()}}>
+        <Text style={styles.changePasswordText}>Change Password</Text>
+      </TouchableOpacity>
 
       <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
         <Text style={styles.signOutButtonText}>Sign Out</Text>
@@ -213,6 +237,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   signOutButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  changePasswordButton: {
+    margin: 12,
+    backgroundColor: '#f44336',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  changePasswordText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',

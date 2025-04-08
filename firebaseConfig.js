@@ -1,6 +1,6 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getAuth } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBDSxr6tcko18OaGKR4FbV22-n-aLHD3VA",
@@ -14,14 +14,6 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const db = getFirestore(app);
 
-// Set persistence
-setPersistence(auth, browserSessionPersistence)  // Adjust the persistence according to your needs
-  .then(() => {
-    console.log('Persistence set');
-  })
-  .catch((error) => {
-    console.error('Error setting persistence', error);
-  });
-
-export { auth };
+export { auth, db, app };

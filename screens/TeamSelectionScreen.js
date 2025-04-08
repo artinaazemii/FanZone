@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, Image, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  FlatList,
+  Image,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
 import { doc, setDoc, getFirestore } from 'firebase/firestore';
+
 
 // Sample football teams data - you would fetch this from an API or Firebase
 const FOOTBALL_TEAMS = [
@@ -72,7 +82,6 @@ const TeamSelectionScreen = () => {
   const [mainTeam, setMainTeam] = useState(null);
   const [followingTeams, setFollowingTeams] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [isSaved, setIsSaved] = useState(false); // New state to track save completion
   const navigation = useNavigation();
   const currentUser = auth.currentUser;
 
@@ -83,17 +92,17 @@ const TeamSelectionScreen = () => {
       return;
     }
 
-    if (followingTeams.some(t => t.id === team.id)) {
+    if (followingTeams.some((t) => t.id === team.id)) {
       // Deselect following team
-      setFollowingTeams(followingTeams.filter(t => t.id !== team.id));
+      setFollowingTeams(followingTeams.filter((t) => t.id !== team.id));
       return;
     }
 
     if (!mainTeam) {
-      // Select main team
+      // Select main team first
       setMainTeam(team);
     } else if (followingTeams.length < 3) {
-      // Select following team
+      // Then add following teams
       setFollowingTeams([...followingTeams, team]);
     } else {
       Alert.alert('Selection Limit', 'You can only select three teams to follow');
@@ -102,7 +111,7 @@ const TeamSelectionScreen = () => {
 
   const getTeamStatus = (team) => {
     if (mainTeam && mainTeam.id === team.id) return 'main';
-    if (followingTeams.some(t => t.id === team.id)) return 'following';
+    if (followingTeams.some((t) => t.id === team.id)) return 'following';
     return 'none';
   };
 
@@ -121,22 +130,29 @@ const TeamSelectionScreen = () => {
 
     try {
       const userRef = doc(db, 'users', currentUser.uid);
-      
-      await setDoc(userRef, {
-        mainTeam: {
-          id: mainTeam.id,
-          name: mainTeam.name,
-          logo: mainTeam.logo
+      await setDoc(
+        userRef,
+        {
+          mainTeam: {
+            id: mainTeam.id,
+            name: mainTeam.name,
+            logo: mainTeam.logo,
+          },
+          followingTeams: followingTeams.map((team) => ({
+            id: team.id,
+            name: team.name,
+            logo: team.logo,
+          })),
+          updatedAt: new Date().toISOString(),
         },
-        followingTeams: followingTeams.map(team => ({
-          id: team.id,
-          name: team.name,
-          logo: team.logo
-        })),
-        updatedAt: new Date().toISOString()
-      }, { merge: true });
+        { merge: true }
+      );
 
-      setIsSaved(true); // Mark as saved
+      // Use navigation.reset for a smooth transition to the MainApp
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'MainApp' }],
+      });
     } catch (error) {
       console.error('Error saving team selections:', error);
       Alert.alert('Error', 'Failed to save your team selections. Please try again.');
@@ -145,21 +161,12 @@ const TeamSelectionScreen = () => {
     }
   };
 
-  // Trigger navigation when `isSaved` changes
-  useEffect(() => {
-    if (isSaved) {
-      navigation.navigate('MainApp');
-    }
-  }, [isSaved]); // Trigger navigation when isSaved changes
-
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select Your Teams</Text>
-      
+
       <View style={styles.instructionContainer}>
-        <Text style={styles.instruction}>
-          Select 1 main team and 3 teams to follow
-        </Text>
+        <Text style={styles.instruction}>Select 1 main team and 3 teams to follow</Text>
         <Text style={styles.selectionStatus}>
           Main team: {mainTeam ? mainTeam.name : 'Not selected'}
         </Text>
@@ -178,7 +185,7 @@ const TeamSelectionScreen = () => {
               style={[
                 styles.teamItem,
                 status === 'main' && styles.mainTeamItem,
-                status === 'following' && styles.followingTeamItem
+                status === 'following' && styles.followingTeamItem,
               ]}
               onPress={() => handleTeamSelect(item)}
             >
@@ -202,7 +209,7 @@ const TeamSelectionScreen = () => {
       <TouchableOpacity
         style={[
           styles.saveButton,
-          (!mainTeam || followingTeams.length < 3) && styles.disabledButton
+          (!mainTeam || followingTeams.length < 3) && styles.disabledButton,
         ]}
         onPress={saveTeamSelections}
         disabled={!mainTeam || followingTeams.length < 3 || loading}

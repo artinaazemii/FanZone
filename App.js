@@ -1,19 +1,21 @@
-
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, getFirestore } from 'firebase/firestore';
+import { onSnapshot, doc, getFirestore } from 'firebase/firestore';
 import { auth } from './firebaseConfig';
 import { View, ActivityIndicator } from 'react-native';
 import LoginScreen from './screens/LogInScreen';
 import SignupScreen from './screens/SignupScreen';
-import NavigationTabs from './navigation/Navigation'; // Import your tab navigation
-import TeamSelectionScreen from './screens/TeamSelectionScreen'; // Import the team selection screen
-import ProfileScreen from './screens/ProfileScreen'; // Import the profile screen
+import NavigationTabs from './navigation/Navigation';
+import TeamSelectionScreen from './screens/TeamSelectionScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import { enableScreens } from 'react-native-screens';
+
+enableScreens(); // Enable native screens for performance
 
 const Stack = createNativeStackNavigator();
-const db = getFirestore(); // Initialize Firestore
+const db = getFirestore();
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -22,65 +24,70 @@ export default function App() {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (user) => {
+    let unsubscribeFromSnapshot;
+    const unsubscribeFromAuth = onAuthStateChanged(auth, (user) => {
       setLoading(true);
-      
       if (user) {
         setUser(user);
         setIsLoggedIn(true);
-        
-        // Check if user has selected teams
-        try {
-          const userDoc = await getDoc(doc(db, 'users', user.uid));
-          if (userDoc.exists() && userDoc.data().mainTeam) {
+        const userRef = doc(db, 'users', user.uid);
+        // Listen for real-time updates on the user document
+        unsubscribeFromSnapshot = onSnapshot(userRef, (docSnapshot) => {
+          if (docSnapshot.exists() && docSnapshot.data().mainTeam) {
             setHasSelectedTeams(true);
           } else {
             setHasSelectedTeams(false);
           }
-        } catch (error) {
-          console.error('Error checking user data:', error);
-          setHasSelectedTeams(false);
-        }
+          setLoading(false);
+        });
       } else {
         setUser(null);
         setIsLoggedIn(false);
         setHasSelectedTeams(false);
+        setLoading(false);
       }
-      
-      setLoading(false);
     });
-    
-    return unsubscribe;
+
+    return () => {
+      unsubscribeFromAuth();
+      if (unsubscribeFromSnapshot) unsubscribeFromSnapshot();
+    };
   }, []);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#3498db" />
+      </View>
+    );
+  }
 
   return (
     <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          // Set smooth animation transition—try 'slide_from_right', 'fade', or 'slide_from_bottom'
+          animation: 'slide_from_right',
+        }}
+      >
         {!isLoggedIn ? (
-          // Show Login and Signup screens if not logged in
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
         ) : (
-          // User is logged in
           !hasSelectedTeams ? (
-            // Show team selection screen if user hasn't selected teams
-            <Stack.Screen 
-              name="TeamSelection" 
-              component={TeamSelectionScreen} 
-              options={{ headerShown: false }}
-            />
+            <Stack.Screen name="TeamSelection" component={TeamSelectionScreen} />
           ) : (
-            // Show the main app navigation if user has selected teams
             <>
               <Stack.Screen name="MainApp" component={NavigationTabs} />
-              <Stack.Screen 
-                name="Profile" 
-                component={ProfileScreen} 
-                options={{ 
+              <Stack.Screen
+                name="Profile"
+                component={ProfileScreen}
+                options={{
                   headerShown: true,
-                  title: 'My Profile'
+                  title: 'My Profile',
                 }}
               />
             </>

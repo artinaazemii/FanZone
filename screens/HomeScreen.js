@@ -239,7 +239,7 @@ const quizCategoriesData = [
 ];
 
 /* ----- UI Components ----- */
-// Component to render a single league/tournament (acts like a container)
+// Component to render a single league/tournament (acts as a container)
 const QuizCategory = ({ category, onSelectLeague }) => (
   <View style={styles.quizCategory}>
     <View style={styles.categoryHeader}>
@@ -279,10 +279,19 @@ const QuizList = ({ categories, onSelectLeague }) => (
   </ScrollView>
 );
 
-// Component to display list of teams for a given league/tournament
+// Component to display list of teams for a given league/tournament with a top left back button
 const TeamList = ({ league, onSelectTeam, onBack }) => (
   <ScrollView style={styles.teamListContainer}>
-    <Text style={styles.headerText}>{league.league} Teams</Text>
+    <View style={styles.teamListHeader}>
+      <TouchableOpacity onPress={onBack} style={styles.backButtonTop}>
+        <Text style={styles.backButtonTopText}>
+          {"\u2190"} Back
+        </Text>
+      </TouchableOpacity>
+      <Text style={[styles.headerText, styles.teamListTitle]}>
+        {league.league} Teams
+      </Text>
+    </View>
     {league.teams.map((team) => (
       <TouchableOpacity
         key={team.id}
@@ -292,9 +301,6 @@ const TeamList = ({ league, onSelectTeam, onBack }) => (
         <Text style={styles.teamText}>{team.name}</Text>
       </TouchableOpacity>
     ))}
-    <TouchableOpacity style={styles.backButton} onPress={onBack}>
-      <Text style={styles.backText}>Back to Leagues/Tournaments</Text>
-    </TouchableOpacity>
   </ScrollView>
 );
 
@@ -490,12 +496,42 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 20,
   },
+  // TeamList header with new back button styles
+  teamListHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  backButtonTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    elevation: 3,
+  },
+  backButtonTopText: {
+    fontSize: 16,
+    color: '#007bff',
+    fontWeight: 'bold',
+    marginLeft: 5,
+  },
   headerText: {
     fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 30,
     color: '#1a1a1a',
     textAlign: 'center',
+  },
+  teamListTitle: {
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 40,
   },
   quizCategory: {
     marginBottom: 30,

@@ -6,6 +6,8 @@ import HomeScreen from '../screens/HomeScreen';
 import { signOut } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 import { useNavigation } from '@react-navigation/native';
+import ScoreBoardScreen from '../screens/ScoreBoardScreen'; // në vend të funksionit lokal
+
 
 const Tab = createBottomTabNavigator();
 const logo = require('../assets/logo.png');
@@ -32,13 +34,13 @@ function ChatScreen() {
   );
 }
 
-function ScoreBoardScreen() {
-  return (
-    <View style={styles.screenContainer}>
-      <Text>Score Board</Text>
-    </View>
-  );
-}
+// function ScoreBoardScreen() {
+//   return (
+//     <View style={styles.screenContainer}>
+//       <Text>Score Board</Text>
+//     </View>
+//   );
+// }
 
 function ShopScreen() {
   return (

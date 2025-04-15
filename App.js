@@ -10,9 +10,10 @@ import SignupScreen from './screens/SignupScreen';
 import NavigationTabs from './navigation/Navigation';
 import TeamSelectionScreen from './screens/TeamSelectionScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import ScoreboardScreen from './screens/ScoreBoardScreen'; // ✅ import scoreboard
 import { enableScreens } from 'react-native-screens';
 
-enableScreens(); // Enable native screens for performance
+enableScreens(); // Performance boost for navigation
 
 const Stack = createNativeStackNavigator();
 const db = getFirestore();
@@ -31,7 +32,6 @@ export default function App() {
         setUser(user);
         setIsLoggedIn(true);
         const userRef = doc(db, 'users', user.uid);
-        // Listen for real-time updates on the user document
         unsubscribeFromSnapshot = onSnapshot(userRef, (docSnapshot) => {
           if (docSnapshot.exists() && docSnapshot.data().mainTeam) {
             setHasSelectedTeams(true);
@@ -67,7 +67,6 @@ export default function App() {
       <Stack.Navigator
         screenOptions={{
           headerShown: false,
-          // Set smooth animation transition—try 'slide_from_right', 'fade', or 'slide_from_bottom'
           animation: 'slide_from_right',
         }}
       >
@@ -76,22 +75,28 @@ export default function App() {
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Signup" component={SignupScreen} />
           </>
+        ) : !hasSelectedTeams ? (
+          <Stack.Screen name="TeamSelection" component={TeamSelectionScreen} />
         ) : (
-          !hasSelectedTeams ? (
-            <Stack.Screen name="TeamSelection" component={TeamSelectionScreen} />
-          ) : (
-            <>
-              <Stack.Screen name="MainApp" component={NavigationTabs} />
-              <Stack.Screen
-                name="Profile"
-                component={ProfileScreen}
-                options={{
-                  headerShown: true,
-                  title: 'My Profile',
-                }}
-              />
-            </>
-          )
+          <>
+            <Stack.Screen name="MainApp" component={NavigationTabs} />
+            <Stack.Screen
+              name="Profile"
+              component={ProfileScreen}
+              options={{
+                headerShown: true,
+                title: 'My Profile',
+              }}
+            />
+            <Stack.Screen
+              name="Scoreboard"
+              component={ScoreboardScreen}
+              options={{
+                headerShown: true,
+                title: 'Scoreboard',
+              }}
+            />
+          </>
         )}
       </Stack.Navigator>
     </NavigationContainer>

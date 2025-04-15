@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, TouchableOpacity, Image, Platform, Modal } from 'react-native';
+import {
+  View, Text, TextInput, Button, StyleSheet, Alert,
+  TouchableOpacity, Image, Platform, Modal
+} from 'react-native';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 
@@ -27,6 +30,11 @@ const LoginScreen = ({ navigation }) => {
         await auth.signOut(); // Log the user out if email is not verified
         return;
       }
+     
+      // Display a welcome message with the user's display name.
+      // (Display name was set during sign up by updateProfile.)
+      const displayName = user.displayName || 'Football Fan';
+      Alert.alert("Welcome", `Welcome ${displayName}!`);
 
       // Navigate to the main app screen after successful login
       navigation.replace('MainApp');

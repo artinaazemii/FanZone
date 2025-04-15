@@ -1,19 +1,20 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Alert, 
-  Modal, 
-  View, 
-  Text, 
-  StyleSheet, 
-  Image, 
-  ScrollView, 
-  TouchableOpacity, 
+import {
+  Alert,
+  Modal,
+  View,
+  Text,
+  StyleSheet,
+  Image,
+  ScrollView,
+  TouchableOpacity,
   ActivityIndicator,
   FlatList
 } from 'react-native';
 import { auth } from '../firebaseConfig';
 import { doc, getDoc, updateDoc, getFirestore } from 'firebase/firestore';
-import { signOut, sendPasswordResetEmail } from 'firebase/auth';
+import { signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import * as ImagePicker from 'expo-image-picker';
 
 const db = getFirestore();
 
@@ -81,6 +82,7 @@ const FOOTBALL_TEAMS = [
 
 const ProfileScreen = ({ navigation }) => {
   const [userData, setUserData] = useState(null);
+  const [userPhoto, setUserPhoto] = useState(auth.currentUser?.photoURL); // Local state for photoURL
   const [loading, setLoading] = useState(true);
   const [showTeamEditor, setShowTeamEditor] = useState(false);
   const [tempTeams, setTempTeams] = useState({
@@ -122,11 +124,8 @@ const ProfileScreen = ({ navigation }) => {
       Alert.alert('Error', 'User is not authenticated.');
       return;
     }
-
     sendPasswordResetEmail(auth, auth.currentUser.email)
-      .then(() => {
-        Alert.alert('Success', 'Password reset email sent!');
-      })
+      .then(() => Alert.alert('Success', 'Password reset email sent!'))
       .catch((error) => {
         console.error('Error sending password reset email:', error);
         Alert.alert('Error', error.message);
@@ -138,19 +137,16 @@ const ProfileScreen = ({ navigation }) => {
       Alert.alert('Selection Required', 'Please select 1 main team and 3 following teams');
       return;
     }
-
     try {
       await updateDoc(doc(db, 'users', auth.currentUser.uid), {
         mainTeam: tempTeams.mainTeam,
         followingTeams: tempTeams.followingTeams
       });
-      
       setUserData({
         ...userData,
         mainTeam: tempTeams.mainTeam,
         followingTeams: tempTeams.followingTeams
       });
-      
       setShowTeamEditor(false);
       Alert.alert('Success', 'Your teams have been updated!');
     } catch (error) {
@@ -160,13 +156,10 @@ const ProfileScreen = ({ navigation }) => {
   };
 
   const handleTeamSelect = (team) => {
-    // If team is already selected as main, deselect it
     if (tempTeams.mainTeam && tempTeams.mainTeam.id === team.id) {
-      setTempTeams(prev => ({...prev, mainTeam: null}));
+      setTempTeams(prev => ({ ...prev, mainTeam: null }));
       return;
     }
-
-    // If team is in following teams, remove it
     if (tempTeams.followingTeams.some(t => t.id === team.id)) {
       setTempTeams(prev => ({
         ...prev,
@@ -174,14 +167,10 @@ const ProfileScreen = ({ navigation }) => {
       }));
       return;
     }
-
-    // If no main team selected, make this the main team
     if (!tempTeams.mainTeam) {
-      setTempTeams(prev => ({...prev, mainTeam: team}));
+      setTempTeams(prev => ({ ...prev, mainTeam: team }));
       return;
     }
-
-    // Otherwise, add to following teams if we have space
     if (tempTeams.followingTeams.length < 3) {
       setTempTeams(prev => ({
         ...prev,
@@ -198,6 +187,34 @@ const ProfileScreen = ({ navigation }) => {
     return 'none';
   };
 
+  // Function to handle profile picture update
+  const handleUpdateProfilePicture = async () => {
+    const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (status !== 'granted') {
+      Alert.alert("Permission Required", "Permission to access the media library is required!");
+      return;
+    }
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 1
+    });
+    if (!result.cancelled) {
+      try {
+        await updateProfile(auth.currentUser, { photoURL: result.uri });
+        // Reload the current user data from Firebase Auth
+        await auth.currentUser.reload();
+        const updatedPhoto = auth.currentUser.photoURL;
+        setUserPhoto(updatedPhoto);
+        Alert.alert("Success", "Profile picture updated!");
+      } catch (err) {
+        console.error("Profile picture update error:", err.message);
+        Alert.alert("Error", err.message);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -209,27 +226,31 @@ const ProfileScreen = ({ navigation }) => {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <View style={styles.profileImageContainer}>
-          <Image
-            source={{ uri: auth.currentUser?.photoURL || 'https://via.placeholder.com/100' }}
-            style={styles.profileImage}
-          />
-        </View>
-        <Text style={styles.userName}>{auth.currentUser?.displayName || 'Football Fan'}</Text>
+        <TouchableOpacity onPress={handleUpdateProfilePicture}>
+          <View style={styles.profileImageContainer}>
+            <Image
+              source={{ uri: userPhoto || 'https://via.placeholder.com/100' }}
+              style={styles.profileImage}
+            />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.userName}>
+          {auth.currentUser?.displayName || 'Football Fan'}
+        </Text>
         <Text style={styles.userEmail}>{auth.currentUser?.email}</Text>
       </View>
 
       <View style={styles.teamsContainer}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Teams</Text>
-          <TouchableOpacity 
+          <TouchableOpacity
             style={styles.editButton}
             onPress={() => setShowTeamEditor(true)}
           >
             <Text style={styles.editButtonText}>Edit</Text>
           </TouchableOpacity>
         </View>
-        
+       
         {userData?.mainTeam && (
           <View style={styles.mainTeamContainer}>
             <Text style={styles.teamSectionTitle}>Main Team</Text>
@@ -276,7 +297,6 @@ const ProfileScreen = ({ navigation }) => {
               <Text style={styles.closeButton}>Close</Text>
             </TouchableOpacity>
           </View>
-          
           <View style={styles.instructionContainer}>
             <Text style={styles.instruction}>
               Select 1 main team and 3 teams to follow
@@ -359,16 +379,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 4,
-    elevation: 4,
+    overflow: 'hidden'
   },
   profileImage: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
+    width: 100,
+    height: 100,
   },
   userName: {
     fontSize: 24,

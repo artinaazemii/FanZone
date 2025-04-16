@@ -37,7 +37,7 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Welcome", `Welcome ${displayName}!`);
 
       // Navigate to the main app screen after successful login
-      navigation.replace('MainApp');
+      navigation.replace('Main');
     } catch (error) {
       console.error("Login error:", error.message);
       Alert.alert("Login Failed", "Invalid password or email");
@@ -103,7 +103,7 @@ const LoginScreen = ({ navigation }) => {
 
       {/* "Forget Password?" Touchable */}
       <TouchableOpacity onPress={forgetPassword} style={styles.forgetPasswordContainer}>
-        <Text style={styles.link}>Forget Password?</Text>
+        <Text style={styles.link}>Forgot Password?</Text>
       </TouchableOpacity>
 
       {/* Android Reset Password Modal */}

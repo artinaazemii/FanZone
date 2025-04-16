@@ -446,13 +446,7 @@ const HomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      {/* Header with Profile Icon */}
-      <View style={styles.header}>
-        <Text style={styles.appTitle}>Football Quiz</Text>
-        <TouchableOpacity onPress={navigateToProfile} style={styles.profileIconContainer}>
-          <ProfileIcon size={40} />
-        </TouchableOpacity>
-      </View>
+   
 
       {selectedTeam ? (
         <QuizScreen quiz={selectedTeam} onQuit={handleBackFromQuiz} backText="Back to Teams" />
@@ -485,9 +479,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#ffffff',
   },
-  profileIconContainer: {
-    marginLeft: 'auto',
-  },
+  
   quizListContainer: {
     flex: 1,
     padding: 20,

@@ -36,6 +36,7 @@ function Tabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route, navigation }) => ({
+        headerStyle: { backgroundColor: 'white' },
         tabBarStyle: {
           height: 60,
           paddingBottom: 5,

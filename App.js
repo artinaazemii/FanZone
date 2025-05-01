@@ -1,43 +1,43 @@
 import React, { useEffect, useState } from 'react';
+import { View, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { onSnapshot, doc, getFirestore } from 'firebase/firestore';
 import { auth } from './firebaseConfig';
-import { View, ActivityIndicator } from 'react-native';
+
+// Import your screens
 import LoginScreen from './screens/LogInScreen';
 import SignupScreen from './screens/SignupScreen';
-import NavigationTabs from './navigation/Navigation';
 import TeamSelectionScreen from './screens/TeamSelectionScreen';
+import NavigationTabs from './navigation/Navigation';
 import ProfileScreen from './screens/ProfileScreen';
-import ScoreboardScreen from './screens/ScoreBoardScreen'; // ✅ import scoreboard
-import { enableScreens } from 'react-native-screens';
+import ScoreboardScreen from './screens/ScoreBoardScreen';
 
-enableScreens(); // Performance boost for navigation
+// Optional performance boost
+import { enableScreens } from 'react-native-screens';
+enableScreens();
 
 const Stack = createNativeStackNavigator();
 const db = getFirestore();
 
 export default function App() {
+  const [user, setUser] = useState(null);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [hasSelectedTeams, setHasSelectedTeams] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
 
   useEffect(() => {
-    let unsubscribeFromSnapshot;
-    const unsubscribeFromAuth = onAuthStateChanged(auth, (user) => {
+    let unsubscribeFromSnapshot = null;
+    const unsubscribeFromAuth = onAuthStateChanged(auth, async (firebaseUser) => {
       setLoading(true);
-      if (user) {
-        setUser(user);
+      if (firebaseUser) {
+        setUser(firebaseUser);
         setIsLoggedIn(true);
-        const userRef = doc(db, 'users', user.uid);
+        const userRef = doc(db, 'users', firebaseUser.uid);
         unsubscribeFromSnapshot = onSnapshot(userRef, (docSnapshot) => {
-          if (docSnapshot.exists() && docSnapshot.data().mainTeam) {
-            setHasSelectedTeams(true);
-          } else {
-            setHasSelectedTeams(false);
-          }
+          const data = docSnapshot.data();
+          setHasSelectedTeams(!!(data && data.mainTeam));
           setLoading(false);
         });
       } else {
@@ -54,6 +54,7 @@ export default function App() {
     };
   }, []);
 
+  // Show loading spinner while auth state resolves
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -64,12 +65,7 @@ export default function App() {
 
   return (
     <NavigationContainer>
-      <Stack.Navigator
-        screenOptions={{
-          headerShown: false,
-          animation: 'slide_from_right',
-        }}
-      >
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         {!isLoggedIn ? (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />

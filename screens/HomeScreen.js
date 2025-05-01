@@ -7,7 +7,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Dimensions,
-  Image,
+  Image
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ProfileIcon from '../screens/ProfileIcon';
@@ -230,13 +230,11 @@ const quizCategoriesData = [
     ]
   }
 ];
-
-
 const QuizCategory = ({ category, onSelectLeague }) => (
   <View style={styles.quizCategory}>
     <Text style={styles.categoryTitle}>{category.title}</Text>
     <View style={styles.quizGrid}>
-      {category.quizzes.map((l) => (
+      {category.quizzes.map(l => (
         <TouchableOpacity
           key={l.id}
           style={styles.quizButton}
@@ -258,20 +256,324 @@ const QuizList = ({ categories, onSelectLeague }) => (
   </ScrollView>
 );
 
+const TeamList = ({ league, onSelectTeam, onBack }) => (
+  <View style={{ flex: 1 }}>
+    <TouchableOpacity style={styles.backTop} onPress={onBack}>
+      <Text style={styles.backTopText}>← Back</Text>
+    </TouchableOpacity>
+    <Text style={styles.teamHeader}>{league.league} Teams</Text>
+    <ScrollView contentContainerStyle={styles.teamList}>
+      {league.teams.map(t => (
+        <TouchableOpacity
+          key={t.id}
+          style={styles.teamButton}
+          onPress={() => onSelectTeam(t)}
+        >
+          <Text style={styles.teamName}>{t.name}</Text>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  </View>
+);
+
+const QuizScreen = ({ quiz, onQuit, backText }) => {
+  const [qIdx, setQIdx]         = useState(0);
+  const [score, setScore]       = useState(0);
+  const [finished, setFinished] = useState(false);
+  const [time, setTime]         = useState(10);
+  const [choice, setChoice]     = useState(null);
+  const [feedback, setFeedback] = useState(false);
+
+  useEffect(() => {
+    if (!feedback && time > 0) {
+      const t = setTimeout(() => setTime(t => t - 1), 1000);
+      return () => clearTimeout(t);
+    } else if (time === 0) nextQ();
+  }, [time, feedback]);
+
+  const answer = idx => {
+    setChoice(idx);
+    setFeedback(true);
+    if (idx === quiz.questions[qIdx].correct) setScore(s => s + 1);
+    setTimeout(nextQ, 1200);
+  };
+
+  const nextQ = () => {
+    const nxt = qIdx + 1;
+    if (nxt < quiz.questions.length) {
+      setQIdx(nxt);
+      setTime(10);
+      setChoice(null);
+      setFeedback(false);
+    } else {
+      setFinished(true);
+    }
+  };
+
+  if (finished) {
+    return (
+      <View style={styles.endContainer}>
+        <Text style={styles.endText}>
+          You scored {score}/{quiz.questions.length}
+        </Text>
+        <TouchableOpacity
+          style={styles.endBtn}
+          onPress={() => {
+            setQIdx(0);
+            setScore(0);
+            setFinished(false);
+            setTime(10);
+          }}
+        >
+          <Text style={styles.endBtnText}>Restart</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.endBtn} onPress={onQuit}>
+          <Text style={styles.endBtnText}>{backText}</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const q = quiz.questions[qIdx];
+  return (
+    <View style={styles.quizContainer}>
+      <Text style={styles.timer}>Time: {time}s</Text>
+      <Text style={styles.qNum}>
+        Q{qIdx + 1}/{quiz.questions.length}
+      </Text>
+      <Text style={styles.qText}>{q.question}</Text>
+      {q.options.map((opt, i) => {
+        let btn = styles.optBtn;
+        if (feedback) {
+          if (i === q.correct) btn = styles.optCorrect;
+          else if (i === choice) btn = styles.optWrong;
+        }
+        return (
+          <TouchableOpacity
+            key={i}
+            style={btn}
+            onPress={() => answer(i)}
+            disabled={feedback}
+          >
+            <Text style={styles.optText}>{opt}</Text>
+          </TouchableOpacity>
+        );
+      })}
+      <TouchableOpacity style={styles.quitBtn} onPress={onQuit}>
+        <Text style={styles.quitText}>{backText}</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// ---------------------------------------------
+// MEMORY MATCH GAME
+
+const MEMORY_TEAMS = [
+  { id:'arsenal',    logo:'https://upload.wikimedia.org/wikipedia/en/thumb/5/53/Arsenal_FC.svg/800px-Arsenal_FC.svg.png' },
+  { id:'barcelona',  logo:'https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/800px-FC_Barcelona_%28crest%29.svg.png' },
+  { id:'realmadrid', logo:'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/800px-Real_Madrid_CF.svg.png' },
+  { id:'bayern',     logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1f/Logo_FC_Bayern_M%C3%BCnchen_%282002%E2%80%932017%29.svg/800px-Logo_FC_Bayern_M%C3%BCnchen_%282002%E2%80%932017%29.svg.png' },
+  { id:'liverpool',  logo:'https://upload.wikimedia.org/wikipedia/en/thumb/0/0c/Liverpool_FC.svg/800px-Liverpool_FC.svg.png' },
+  { id:'psg',        logo:'https://upload.wikimedia.org/wikipedia/en/thumb/a/a7/Paris_Saint-Germain_F.C..svg/800px-Paris_Saint-Germain_F.C..svg.png' },
+  { id:'mancity',    logo:'https://upload.wikimedia.org/wikipedia/en/thumb/e/eb/Manchester_City_FC_badge.svg/800px-Manchester_City_FC_badge.svg.png' },
+  { id:'juventus',   logo:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Juventus_Logo.png/800px-Juventus_Logo.png' },
+  { id:'chelsea',    logo:'https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/800px-Chelsea_FC.svg.png' },
+  { id:'tottenham',  logo:'https://upload.wikimedia.org/wikipedia/en/thumb/b/b4/Tottenham_Hotspur.svg/800px-Tottenham_Hotspur.svg.png' }
+];
+
+const makeDeck = () => {
+  const deck = [];
+  MEMORY_TEAMS.forEach(t => {
+    deck.push({ key: t.id+'a', team:t, flipped:false, matched:false });
+    deck.push({ key: t.id+'b', team:t, flipped:false, matched:false });
+  });
+  return deck.sort(() => Math.random() - 0.5);
+};
+
+const MemoryMatchGame = ({ onQuit }) => {
+  const [deck, setDeck]       = useState(makeDeck());
+  const [first, setFirst]     = useState(null);
+  const [second, setSecond]   = useState(null);
+  const [lock, setLock]       = useState(false);
+  const [matches, setMatches] = useState(0);
+
+  const total = MEMORY_TEAMS.length * 2;
+  const cols  = Math.ceil(Math.sqrt(total));
+  const rows  = Math.ceil(total/cols);
+  const M     = 8;
+  const Hhdr  = 80;
+  const avail = height - Hhdr;
+  const wcard = (width - (cols+1)*M)/cols;
+  const hcard = (avail - (rows+1)*M)/rows;
+  const Csize = Math.floor(Math.min(wcard, hcard));
+
+  const flipCard = idx => {
+    if (lock || deck[idx].flipped || deck[idx].matched) return;
+    const d = [...deck]; d[idx].flipped = true; setDeck(d);
+    if (first === null) setFirst(idx);
+    else { setSecond(idx); setLock(true); }
+  };
+
+  useEffect(() => {
+    if (first !== null && second !== null) {
+      const a = deck[first], b = deck[second];
+      if (a.team.id === b.team.id) {
+        const d = [...deck];
+        d[first].matched = d[second].matched = true;
+        setDeck(d);
+        setMatches(m => m + 1);
+        resetTurn();
+      } else {
+        setTimeout(() => {
+          const d = [...deck];
+          d[first].flipped = d[second].flipped = false;
+          setDeck(d);
+          resetTurn();
+        }, 500);
+      }
+    }
+  }, [second]);
+
+  const resetTurn = () => {
+    setFirst(null);
+    setSecond(null);
+    setLock(false);
+  };
+
+  if (matches === MEMORY_TEAMS.length) {
+    return (
+      <View style={styles.gameContainer}>
+        <View style={styles.gameHeader}>
+          <TouchableOpacity onPress={onQuit}>
+            <Text style={styles.backTopText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.gameTitle}>Memory Match</Text>
+          <View style={{ width: 60 }} />
+        </View>
+        <Text style={styles.winText}>🎉 You matched all teams!</Text>
+        <TouchableOpacity style={styles.gameBtn} onPress={onQuit}>
+          <Text style={styles.gameBtnText}>Back to Menu</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.gameContainer}>
+      <View style={styles.gameHeader}>
+        <TouchableOpacity onPress={onQuit}>
+          <Text style={styles.backTopText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.gameTitle}>Memory Match</Text>
+        <View style={{ width: 60 }} />
+      </View>
+      <View style={styles.memoryContainer}>
+        {deck.map((item, i) => (
+          <TouchableOpacity
+            key={item.key}
+            style={[
+              styles.card,
+              { width:Csize, height:Csize, margin:M/2 },
+              item.flipped||item.matched ? styles.cardOn : styles.cardOff
+            ]}
+            onPress={() => flipCard(i)}
+          >
+            {(item.flipped||item.matched) && (
+              <Image
+                source={{ uri: item.team.logo, cache: 'force-cache' }}
+                style={{ width: Csize-10, height: Csize-10, resizeMode: 'contain' }}
+              />
+            )}
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+};
+
+// ---------------------------------------------
+// TAP-THE-BALL GAME
+
+const BallTapGame = ({ onQuit }) => {
+  const BALL = 80;
+  const randomPos = () => ({
+    left: Math.random() * (width - BALL),
+    top:  Math.random() * (height - BALL - 150) + 150
+  });
+
+  const [pos, setPos]       = useState(randomPos());
+  const [score, setScore]   = useState(0);
+  const [timeLeft, setTime] = useState(10);
+  const [over, setOver]     = useState(false);
+
+  useEffect(() => {
+    if (timeLeft <= 0) { setOver(true); return; }
+    const t = setTimeout(() => setTime(t => t - 1), 1000);
+    return () => clearTimeout(t);
+  }, [timeLeft]);
+
+  const tap = () => {
+    setScore(s => s + 1);
+    setPos(randomPos());
+  };
+
+  if (over) {
+    return (
+      <View style={styles.gameContainer}>
+        <View style={styles.gameHeader}>
+          <TouchableOpacity onPress={onQuit}>
+            <Text style={styles.backTopText}>← Back</Text>
+          </TouchableOpacity>
+          <Text style={styles.gameTitle}>Tap the Ball!</Text>
+          <View style={{ width: 60 }} />
+        </View>
+        <Text style={styles.gameScore}>Your Score: {score}</Text>
+        <TouchableOpacity style={styles.gameBtn} onPress={onQuit}>
+          <Text style={styles.gameBtnText}>Back to Menu</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  return (  
+    <View style={styles.gameContainer}>
+      <View style={styles.gameHeader}>
+        <TouchableOpacity onPress={onQuit}>
+          <Text style={styles.backTopText}>← Back</Text>
+        </TouchableOpacity>
+        <Text style={styles.gameTitle}>Tap the Ball!</Text>
+        <View style={{ width: 60 }} />
+      </View>
+      <Text style={styles.gameScore}>Time: {timeLeft}s  Score: {score}</Text>
+      <TouchableOpacity
+        style={[styles.ball, { top:pos.top, left:pos.left, width:BALL, height:BALL }]}
+        activeOpacity={0.7}
+        onPress={tap}
+      >
+        <Text style={styles.ballText}>⚽️</Text>
+      </TouchableOpacity>
+    </View>
+  );
+};
+
+// ---------------------------------------------
+// MAIN HOME SCREEN
+
 export default function HomeScreen() {
   const nav = useNavigation();
-
   const [selLeague, setSelLeague] = useState(null);
-  const [selTeam, setSelTeam] = useState(null);
-  const [selQuiz, setSelQuiz] = useState(null);
-  const [playMem, setPlayMem] = useState(false);
-  const [playBall, setPlayBall] = useState(false);
+  const [selTeam,   setSelTeam]   = useState(null);
+  const [selQuiz,   setSelQuiz]   = useState(null);
+  const [playMem,   setPlayMem]   = useState(false);
+  const [playBall,  setPlayBall]  = useState(false);
 
+  const goProfile = () => nav.navigate('Profile');
 
   if (playMem)  return <MemoryMatchGame onQuit={() => setPlayMem(false)} />;
-  if (playBall) return <BallTapGame   onQuit={() => setPlayBall(false)} />;
+  if (playBall) return <BallTapGame     onQuit={() => setPlayBall(false)} />;
 
-  if (selTeam)
+  if (selTeam) {
     return (
       <QuizScreen
         quiz={selTeam}
@@ -279,8 +581,9 @@ export default function HomeScreen() {
         backText="Back to Teams"
       />
     );
+  }
 
-  if (selLeague)
+  if (selLeague) {
     return (
       <TeamList
         league={selLeague}
@@ -288,8 +591,9 @@ export default function HomeScreen() {
         onBack={() => setSelLeague(null)}
       />
     );
+  }
 
-  if (selQuiz)
+  if (selQuiz) {
     return (
       <QuizScreen
         quiz={selQuiz}
@@ -297,14 +601,20 @@ export default function HomeScreen() {
         backText="Back to Categories"
       />
     );
+  }
 
   return (
     <ScrollView style={styles.container}>
-  
+      <View style={styles.header}>
+        <Text style={styles.title}>Football Quiz Challenge</Text>
+        <TouchableOpacity onPress={goProfile}>
+          <ProfileIcon />
+        </TouchableOpacity>
+      </View>
 
       <QuizList
         categories={quizCategoriesData}
-        onSelectLeague={(l) => (l.teams ? setSelLeague(l) : setSelQuiz(l))}
+        onSelectLeague={l => (l.teams ? setSelLeague(l) : setSelQuiz(l))}
       />
 
       <TouchableOpacity style={styles.playBtn} onPress={() => setPlayMem(true)}>
@@ -316,45 +626,49 @@ export default function HomeScreen() {
     </ScrollView>
   );
 }
+
+// ---------------------------------------------
+// STYLES
+
 const styles = StyleSheet.create({
- 
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
+  container:        { flex: 1, backgroundColor: '#f5f5f5' },
+  header:           { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
+  title:            { fontSize: 20, fontWeight: 'bold' },
 
+  quizList:         { padding: 16 },
+  quizCategory:     { marginBottom: 24 },
+  categoryTitle:    { fontSize: 18, fontWeight: '600', marginBottom: 8 },
+  quizGrid:         { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
+  quizButton:       { width: '48%', backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center', elevation: 2 },
+  quizText:         { fontSize: 16, fontWeight: '500' },
+  countText:        { fontSize: 12, color: '#555', marginTop: 4 },
 
-  quizList:        { padding: 16 },
-  quizCategory:    { marginBottom: 24 },
-  categoryTitle:   { fontSize: 18, fontWeight: '600', marginBottom: 8 },
-  quizGrid:        { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  quizButton:      { width: '48%', backgroundColor: '#fff', padding: 12, borderRadius: 8, marginBottom: 12, alignItems: 'center', elevation: 2 },
-  quizText:        { fontSize: 16, fontWeight: '500' },
-  countText:       { fontSize: 12, color: '#555', marginTop: 4 },
+  backTop:          { padding: 12, backgroundColor: '#fff', elevation: 2 },
+  backTopText:      { fontSize: 16, color: '#2196f3' },
+  teamHeader:       { fontSize: 18, fontWeight: '600', textAlign: 'center', marginVertical: 12 },
+  teamList:         { paddingHorizontal: 16 },
+  teamButton:       { backgroundColor: '#fff', padding: 14, borderRadius: 8, marginVertical: 6, elevation: 1, alignItems: 'center' },
+  teamName:         { fontSize: 16 },
 
-  backTop:         { padding: 12, backgroundColor: '#fff', elevation: 2 },
-  backTopText:     { color: '#2196f3', fontSize: 16 },
-  teamHeader:      { textAlign: 'center', fontSize: 18, fontWeight: '600', marginVertical: 12 },
-  teamList:        { paddingHorizontal: 16 },
-  teamButton:      { backgroundColor: '#fff', padding: 14, borderRadius: 8, marginVertical: 6, elevation: 1, alignItems: 'center' },
-  teamName:        { fontSize: 16 },
-
-  quizContainer:   { flex: 1, padding: 16, justifyContent: 'center' },
-  timer:           { textAlign: 'center', color: '#e91e63', marginBottom: 4 },
-  qNum:            { textAlign: 'center', color: '#777', marginBottom: 8 },
-  qText:           { fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 16 },
-  optBtn:          { backgroundColor: '#fff', padding: 12, marginVertical: 6, borderRadius: 8, elevation: 1 },
-  optText:         { textAlign: 'center' },
-  optCorrect:      { backgroundColor: '#c8e6c9', padding: 12, marginVertical: 6, borderRadius: 8 },
-  optWrong:        { backgroundColor: '#ffcdd2', padding: 12, marginVertical: 6, borderRadius: 8 },
-  quitBtn:         { marginTop: 16, backgroundColor: '#e91e63', padding: 12, borderRadius: 8, alignItems: 'center' },
-  quitText:        { color: '#fff' },
+  quizContainer:    { flex: 1, padding: 16, justifyContent: 'center' },
+  timer:            { textAlign: 'center', color: '#e91e63', marginBottom: 4 },
+  qNum:             { textAlign: 'center', color: '#777', marginBottom: 8 },
+  qText:            { fontSize: 18, fontWeight: '600', textAlign: 'center', marginBottom: 16 },
+  optBtn:           { backgroundColor: '#fff', padding: 12, marginVertical: 6, borderRadius: 8, elevation: 1 },
+  optText:          { textAlign: 'center' },
+  optCorrect:       { backgroundColor: '#c8e6c9', padding: 12, marginVertical: 6, borderRadius: 8 },
+  optWrong:         { backgroundColor: '#ffcdd2', padding: 12, marginVertical: 6, borderRadius: 8 },
+  quitBtn:          { marginTop: 16, backgroundColor: '#e91e63', padding: 12, borderRadius: 8, alignItems: 'center' },
+  quitText:         { color: '#fff' },
   endContainer:    { flex: 1, justifyContent: 'center', alignItems: 'center' },
   endText:         { fontSize: 20, marginBottom: 20 },
-  endBtn:          { backgroundColor: '#2196f3', padding: 12, borderRadius: 8, marginVertical: 6 },
+  endBtn:          { backgroundColor: '#2196f3', padding: 12, borderRadius: 8 },
   endBtnText:      { color: '#fff' },
 
   gameHeader:      { width: '100%', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 12 },
   gameTitle:       { fontSize: 24, fontWeight: '600' },
 
-  gameContainer:   { flex: 1, alignItems: 'center', paddingTop: 20, backgroundColor: '#e0f7fa' },
+  gameContainer:   { flex: 1, alignItems: 'center', paddingTop: 20 },
   memoryContainer: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', alignItems: 'center' },
   card:            { borderRadius: 8, justifyContent: 'center', alignItems: 'center' },
   cardOff:         { backgroundColor: '#0288d1' },
@@ -368,5 +682,5 @@ const styles = StyleSheet.create({
   gameScore:       { fontSize: 18, marginVertical: 8 },
 
   playBtn:         { backgroundColor: '#26a69a', padding: 14, margin: 20, borderRadius: 8, alignItems: 'center' },
-  playBtnText:     { color: '#fff', fontSize: 18 },
+  playBtnText:     { color: '#fff', fontSize: 18 }
 });

@@ -606,10 +606,6 @@ export default function HomeScreen() {
   return (
     <ScrollView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Football Quiz Challenge</Text>
-        <TouchableOpacity onPress={goProfile}>
-          <ProfileIcon />
-        </TouchableOpacity>
       </View>
 
       <QuizList

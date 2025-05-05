@@ -1,0 +1,68 @@
+/node_modules
+# Expo / React Native
+
+node\_modules/
+.expo/
+.expo-shared/
+web-build/
+
+# Android
+
+android/
+android/app/build/
+
+# iOS / Xcode
+
+ios/Pods/
+ios/Podfile.lock
+ios/build/
+
+# Buck build system
+
+buck-out/
+.buckd/
+
+# CocoaPods
+
+ios/Pods/
+ios/Podfile.lock
+
+# Logs
+
+npm-debug.log\*
+yarn-debug.log\*
+expo-debug.log\*
+
+# Env variables
+
+.env
+.env.local
+.env.\*.local
+
+# Metro Bundler cache
+
+metro-cache/
+
+# IDEs / Editors
+
+.vscode/
+.idea/
+\*.suo
+*.ntvs*
+\*.njsproj
+\*.sw?
+\*.swo
+
+# macOS
+
+.DS\_Store
+
+# Windows
+
+Thumbs.db
+
+# Misc
+
+dist/
+build/
+tmp/

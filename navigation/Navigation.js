@@ -1,3 +1,5 @@
+// navigation/Navigation.js
+
 import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
@@ -6,6 +8,8 @@ import { FontAwesome, Ionicons } from "@expo/vector-icons";
 import HomeScreen from "../screens/HomeScreen";
 import ScoreBoardScreen from "../screens/ScoreBoardScreen";
 import ProfileScreen from "../screens/ProfileScreen";
+import StoreScreen from "../screens/StoreScreen";
+import TeamProductsScreen from "../screens/TeamProductsScreen";  // ← import i ri
 import { auth } from "../firebaseConfig";
 
 const Tab = createBottomTabNavigator();
@@ -20,14 +24,6 @@ function ChatScreen() {
   return (
     <View style={styles.screenContainer}>
       <Text>Chats</Text>
-    </View>
-  );
-}
-
-function ShopScreen() {
-  return (
-    <View style={styles.screenContainer}>
-      <Text>Shop</Text>
     </View>
   );
 }
@@ -57,7 +53,7 @@ function Tabs() {
           if (route.name === "Home") iconName = "home";
           else if (route.name === "Chats") iconName = "comments";
           else if (route.name === "Score Board") iconName = "soccer-ball-o";
-          else if (route.name === "Shop") iconName = "shopping-cart";
+          else if (route.name === "Store") iconName = "shopping-cart";
           return <FontAwesome name={iconName} size={size} color={color} />;
         },
         headerTitle: () => <CustomHeader />,
@@ -75,7 +71,7 @@ function Tabs() {
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Chats" component={ChatScreen} />
       <Tab.Screen name="Score Board" component={ScoreBoardScreen} />
-      <Tab.Screen name="Shop" component={ShopScreen} />
+      <Tab.Screen name="Store" component={StoreScreen} />
     </Tab.Navigator>
   );
 }
@@ -88,6 +84,25 @@ export default function Navigation() {
         component={Tabs}
         options={{ headerShown: false }}
       />
+
+      {/* Ekrani i ri për produktet e ekipit */}
+      <Stack.Screen
+        name="TeamProducts"
+        component={TeamProductsScreen}
+        options={({ route, navigation }) => ({
+          headerTitle: route.params.teamName.toUpperCase(),
+          headerTitleAlign: "center",
+          headerLeft: () => (
+            <TouchableOpacity
+              style={{ marginLeft: 15 }}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+          ),
+        })}
+      />
+
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}

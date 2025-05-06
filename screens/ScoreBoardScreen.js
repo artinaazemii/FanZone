@@ -6,8 +6,8 @@ import {
   FlatList,
   ActivityIndicator,
   RefreshControl,
-  Button,
   ScrollView,
+  TouchableOpacity,
 } from 'react-native';
 import moment from 'moment';
 
@@ -166,22 +166,40 @@ const Scoreboard = () => {
       <View style={styles.center}>
         <Text style={styles.error}>Error: {error}</Text>
         <Text style={styles.note}>Note: Free tier has limited requests</Text>
-        <Button title="Retry" onPress={() => fetchMatches(competition)} />
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={() => fetchMatches(competition)}
+        >
+          <Text style={styles.retryText}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <View style={styles.selector}>
-        {availableCompetitions.map((comp) => (
-          <Button
-            key={comp.id}
-            title={comp.name}
-            onPress={() => setCompetition(comp.id)}
-            color={competition === comp.id ? '#1e88e5' : '#aaa'}
-          />
-        ))}
+      <View style={styles.selectorContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+          {availableCompetitions.map((comp) => (
+            <TouchableOpacity
+              key={comp.id}
+              style={[
+                styles.competitionButton,
+                competition === comp.id && styles.selectedButton,
+              ]}
+              onPress={() => setCompetition(comp.id)}
+            >
+              <Text
+                style={[
+                  styles.competitionText,
+                  competition === comp.id && styles.selectedText,
+                ]}
+              >
+                {comp.name}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
       </View>
 
       <ScrollView
@@ -210,103 +228,128 @@ const Scoreboard = () => {
 };
 
 const styles = StyleSheet.create({
-container: {
-flex: 1,
-backgroundColor: '#f5f5f5',
-},
-selector: {
-flexDirection: 'row',
-flexWrap: 'wrap',
-justifyContent: 'center',
-padding: 8,
-backgroundColor: '#e3e3e3',
-},
-columnsContainer: {
-flexDirection: 'row',
-justifyContent: 'space-between',
-paddingHorizontal: 4,
-},
-column: {
-flex: 1,
-paddingHorizontal: 4,
-},
-section: {
-marginVertical: 8,
-backgroundColor: '#fff',
-borderRadius: 8,
-padding: 8,
-elevation: 2,
-},
-sectionTitle: {
-fontSize: 18,
-fontWeight: 'bold',
-marginBottom: 8,
-textAlign: 'center',
-color: '#444',
-},
-matchContainer: {
-borderBottomWidth: 1,
-borderBottomColor: '#ccc',
-paddingVertical: 6,
-},
-teamRow: {
-flexDirection: 'row',
-justifyContent: 'space-between',
-marginVertical: 2,
-},
-teamName: {
-fontSize: 14,
-fontWeight: '600',
-color: '#333',
-},
-score: {
-fontSize: 14,
-fontWeight: 'bold',
-color: '#000',
-},
-matchDate: {
-fontSize: 12,
-color: '#666',
-marginBottom: 4,
-textAlign: 'center',
-},
-status: {
-fontSize: 12,
-fontWeight: '600',
-textAlign: 'center',
-marginTop: 4,
-},
-live: {
-color: 'red',
-},
-finished: {
-color: '#4caf50',
-},
-liveMatchBox: {
-backgroundColor: '#ffeaea',
-borderRadius: 6,
-padding: 6,
-marginVertical: 4,
-},
-scrollContainer: {
-padding: 8,
-paddingBottom: 100,
-},
-center: {
-flex: 1,
-justifyContent: 'center',
-alignItems: 'center',
-},
-error: {
-fontSize: 16,
-color: 'red',
-marginBottom: 8,
-},
-note: {
-fontSize: 12,
-color: '#777',
-marginBottom: 12,
-},
+  container: {
+    flex: 1,
+    backgroundColor: '#f5f5f5',
+  },
+  selectorContainer: {
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    backgroundColor: '#e3e3e3',
+  },
+  competitionButton: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 20,
+    backgroundColor: '#ccc',
+    marginHorizontal: 4,
+  },
+  selectedButton: {
+    backgroundColor: '#1e88e5',
+  },
+  competitionText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  selectedText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  columnsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  column: {
+    flex: 1,
+    paddingHorizontal: 4,
+  },
+  section: {
+    marginVertical: 8,
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 8,
+    elevation: 2,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+    color: '#444',
+  },
+  matchContainer: {
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+    paddingVertical: 6,
+  },
+  teamRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginVertical: 2,
+  },
+  teamName: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
+  },
+  score: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#000',
+  },
+  matchDate: {
+    fontSize: 12,
+    color: '#666',
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  status: {
+    fontSize: 12,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginTop: 4,
+  },
+  live: {
+    color: 'red',
+  },
+  finished: {
+    color: '#4caf50',
+  },
+  liveMatchBox: {
+    backgroundColor: '#ffeaea',
+    borderRadius: 6,
+    padding: 6,
+    marginVertical: 4,
+  },
+  scrollContainer: {
+    padding: 8,
+    paddingBottom: 100,
+  },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  error: {
+    fontSize: 16,
+    color: 'red',
+    marginBottom: 8,
+  },
+  note: {
+    fontSize: 12,
+    color: '#777',
+    marginBottom: 12,
+  },
+  retryButton: {
+    padding: 10,
+    backgroundColor: '#1e88e5',
+    borderRadius: 6,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });
 
 export default Scoreboard;

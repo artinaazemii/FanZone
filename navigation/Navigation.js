@@ -9,7 +9,9 @@ import HomeScreen from "../screens/HomeScreen";
 import ScoreBoardScreen from "../screens/ScoreBoardScreen";
 import ProfileScreen from "../screens/ProfileScreen";
 import StoreScreen from "../screens/StoreScreen";
-import TeamProductsScreen from "../screens/TeamProductsScreen";  // ← import i ri
+import TeamProductsScreen from "../screens/TeamProductsScreen"; 
+import ProductDetailScreen from "../screens/ProductDetailScreen"; 
+import CartScreen from "../screens/CartScreen"; // importo komponentin
 import { auth } from "../firebaseConfig";
 
 const Tab = createBottomTabNavigator();
@@ -84,6 +86,19 @@ export default function Navigation() {
         component={Tabs}
         options={{ headerShown: false }}
       />
+      <Stack.Screen
+  name="Cart"
+  component={CartScreen}
+  options={({ navigation }) => ({
+    headerTitle: "Cart Details",
+    headerTitleAlign: "center",
+    headerLeft: () => (
+      <TouchableOpacity onPress={() => navigation.goBack()} style={{ marginLeft: 15 }}>
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
+    ),
+  })}
+/>
 
       {/* Ekrani i ri për produktet e ekipit */}
       <Stack.Screen
@@ -102,6 +117,13 @@ export default function Navigation() {
           ),
         })}
       />
+
+<Stack.Screen
+  name="ProductDetail"
+  component={ProductDetailScreen}
+  options={{ title: "Product Detail" }}
+/>
+
 
       <Stack.Screen
         name="Profile"

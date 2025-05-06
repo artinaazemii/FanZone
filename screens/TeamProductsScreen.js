@@ -9,6 +9,8 @@ import {
   Dimensions,
 } from "react-native";
 import { useRoute } from "@react-navigation/native";
+import {useNavigation} from "@react-navigation/native";
+
 
 const CATEGORIES = [
   { key: "home", label: "Home Kit" },
@@ -16,6 +18,7 @@ const CATEGORIES = [
   { key: "third", label: "Third Kit" },
   { key: "goalkeeper", label: "Goalkeeper Kit" },
 ];
+
 
 
 
@@ -201,6 +204,7 @@ const productsData = {
 
 export default function TeamProductsScreen() {
   const { params } = useRoute();
+  const navigation = useNavigation();
   const teamName = params?.teamName;
   const allProducts = productsData[teamName] || [];
 
@@ -229,27 +233,33 @@ export default function TeamProductsScreen() {
       ? filteredProducts
       : [...filteredProducts, ...Array(numColumns - remainder).fill({ id: `blank-${remainder}`, empty: true })];
 
-  const renderProduct = ({ item }) => {
-    if (item.empty) return <View style={[styles.card, { width: cardWidth, opacity: 0 }]} />;
-
-    return (
-      <TouchableOpacity style={[styles.card, { width: cardWidth, maxHeight: cardMaxHeight }]}>
-       <Image source={item.image} style={[styles.image, { height: imageHeight }]} />
-        <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
-        <View style={styles.topRow}>
-          <View style={styles.priceBadge}>
-            <Text style={styles.priceText}>{item.price}€</Text>
-          </View>
-        </View>
-        <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
-        <View style={styles.bottomRow}>
-          <Text style={styles.coinText}>{item.coinPrice}€ with</Text>
-          <Image source={require("../assets/coin.png")} style={styles.coinIcon} />
-          <Text style={styles.coinText}>{item.coinAmount}</Text>
-        </View>
-      </TouchableOpacity>
-    );
-  };
+      const renderProduct = ({ item }) => {
+        if (item.empty) return <View style={[styles.card, { width: cardWidth, opacity: 0 }]} />;
+      
+        return (
+          <TouchableOpacity
+            style={[styles.card, { width: cardWidth }]}
+            onPress={() =>
+              navigation.navigate("ProductDetail", { product: { ...item, teamName } })
+            }
+          >
+            <Image source={item.image} style={[styles.image, { height: cardWidth * 1.2 }]} />
+            <Text style={styles.title} numberOfLines={1}>{item.name}</Text>
+            <View style={styles.topRow}>
+              <View style={styles.priceBadge}>
+                <Text style={styles.priceText}>{item.price}€</Text>
+              </View>
+            </View>
+            <Text style={styles.description} numberOfLines={2}>{item.description}</Text>
+            <View style={styles.bottomRow}>
+              <Text style={styles.coinText}>{item.coinPrice}€ with</Text>
+              <Image source={require("../assets/coin.png")} style={styles.coinIcon} />
+              <Text style={styles.coinText}>{item.coinAmount}</Text>
+            </View>
+          </TouchableOpacity>
+        );
+      };
+      
 
   const renderCategorySelector = () => (
     <View style={styles.categoryRow}>

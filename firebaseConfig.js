@@ -1,6 +1,8 @@
 import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
+import { getAuth, initializeAuth, getReactNativePersistence } from 'firebase/auth';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: "AIzaSyBDSxr6tcko18OaGKR4FbV22-n-aLHD3VA",
@@ -9,11 +11,20 @@ const firebaseConfig = {
   storageBucket: "fanzone-5a8be.appspot.com",
   messagingSenderId: "828963614536",
   appId: "1:828963614536:web:6c8fc10f096a56ded08d7d",
-  measurementId: "G-V2EGR13YL8" // mund të qëndrojë këtu, nuk është problem
+  measurementId: "G-V2EGR13YL8"
 };
 
 const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
 const db = getFirestore(app);
+
+let auth;
+
+if (Platform.OS === 'web') {
+  auth = getAuth(app); // Web nuk mbështet getReactNativePersistence
+} else {
+  auth = initializeAuth(app, {
+    persistence: getReactNativePersistence(AsyncStorage),
+  });
+}
 
 export { auth, db, app };

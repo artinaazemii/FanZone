@@ -12,6 +12,8 @@ import StoreScreen from "../screens/StoreScreen";
 import TeamProductsScreen from "../screens/TeamProductsScreen"; 
 import ProductDetailScreen from "../screens/ProductDetailScreen"; 
 import CartScreen from "../screens/CartScreen"; // importo komponentin
+import DeliveryDetailsScreen from "../screens/DeliveryDetailsScreen";
+
 import { auth } from "../firebaseConfig";
 
 const Tab = createBottomTabNavigator();
@@ -117,6 +119,24 @@ export default function Navigation() {
           ),
         })}
       />
+
+<Stack.Screen
+  name="DeliveryDetails"
+  component={DeliveryDetailsScreen}
+  options={({ navigation }) => ({
+    headerTitle: "Add Delivery Details",
+    headerTitleAlign: "center",
+    headerLeft: () => (
+      <TouchableOpacity
+        style={{ marginLeft: 15 }}
+        onPress={() => navigation.goBack()}
+      >
+        <Ionicons name="arrow-back" size={24} color="black" />
+      </TouchableOpacity>
+    ),
+  })}
+/>
+
 
 <Stack.Screen
   name="ProductDetail"

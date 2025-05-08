@@ -10,6 +10,8 @@ import {
 } from "react-native";
 import { useRoute, useNavigation } from "@react-navigation/native";
 
+
+
 export default function CartScreen() {
   const route = useRoute();
   const navigation = useNavigation();
@@ -99,35 +101,11 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: "#fff",
-  },
-  productRow: {
-    flexDirection: "row",
-    marginBottom: 16,
-    alignItems: "center",
-  },
-  productImage: {
-    width: 100,
-    height: 100,
-    borderRadius: 20,
-    marginRight: 16,
-    backgroundColor: "#f4f4f4",
-  },
-  detailsContainer: {
-    flex: 1,
-  },
-  productName: {
-    fontWeight: "700",
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  productInfo: {
-    fontSize: 13,
-    marginBottom: 6,
-  },
+  container: { padding: 16, backgroundColor: "#fff", flex: 1 },
+  productRow: { flexDirection: "row", marginBottom: 16 },
+  productImage: { width: 100, height: 100, borderRadius: 20 },
+  productTitle: { fontWeight: "bold", fontSize: 14, marginBottom: 4 },
+  sizeText: { fontSize: 13 },
   quantityWrapper: {
     flexDirection: "row",
     alignItems: "center",

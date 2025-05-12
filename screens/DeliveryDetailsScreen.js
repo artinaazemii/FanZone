@@ -47,6 +47,7 @@ export default function DeliveryDetailsScreen() {
         size: route.params?.size,
         paymentMethod: route.params?.paymentMethod,
         deliveryDetails: details,
+        quantity: route.params?.quantity, 
       });
     } catch (error) {
       console.error("Error saving delivery details:", error);

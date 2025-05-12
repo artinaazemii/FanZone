@@ -1,4 +1,3 @@
-// DeliveryDetailsScreen.js
 import React, { useState } from "react";
 import {
   View,
@@ -18,6 +17,8 @@ const db = getFirestore();
 export default function DeliveryDetailsScreen() {
   const navigation = useNavigation();
   const route = useRoute();
+
+  const { product, paymentMethod, cartItems } = route.params;
 
   const [details, setDetails] = useState({
     name: "",
@@ -41,13 +42,14 @@ export default function DeliveryDetailsScreen() {
     try {
       const userId = auth.currentUser.uid;
       await setDoc(doc(db, "deliveryDetails", userId), details);
+
       Alert.alert("Saved", "Delivery details saved successfully.");
+
       navigation.navigate("Cart", {
-        product: route.params?.product,
-        size: route.params?.size,
-        paymentMethod: route.params?.paymentMethod,
+        product,
+        paymentMethod,
+        cartItems,
         deliveryDetails: details,
-        quantity: route.params?.quantity, 
       });
     } catch (error) {
       console.error("Error saving delivery details:", error);

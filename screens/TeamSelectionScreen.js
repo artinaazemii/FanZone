@@ -1,84 +1,13 @@
-// TeamSelectionScreen.js
+// screens/TeamSelectionScreen.js
 import React, { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  ActivityIndicator,
-  Alert,
-  Image,
+  View, Text, FlatList, TouchableOpacity,
+  StyleSheet, ActivityIndicator, Alert
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
-import { auth } from '../firebaseConfig';
-import { doc, setDoc, getFirestore } from 'firebase/firestore';
-
-const logos = {
-  '1':  require('../assets/crests/1.png'),
-  '2':  require('../assets/crests/2.png'),
-  '3':  require('../assets/crests/3.png'),
-  '4':  require('../assets/crests/4.png'),
-  '5':  require('../assets/crests/5.png'),
-  '6':  require('../assets/crests/6.png'),
-  '7':  require('../assets/crests/7.png'),
-  '8':  require('../assets/crests/8.png'),
-  '9':  require('../assets/crests/9.png'),
-  '10': require('../assets/crests/10.png'),
-  '11': require('../assets/crests/11.png'),
-  '12': require('../assets/crests/12.png'),
-  '13': require('../assets/crests/13.png'),
-  '14': require('../assets/crests/14.png'),
-  '15': require('../assets/crests/15.png'),
-  '16': require('../assets/crests/16.png'),
-  '17': require('../assets/crests/17.png'),
-  '18': require('../assets/crests/18.png'),
-  '19': require('../assets/crests/19.png'),
-  '20': require('../assets/crests/20.png'),
-  '21': require('../assets/crests/21.png'),
-  '22': require('../assets/crests/22.png'),
-  '23': require('../assets/crests/23.png'),
-  '24': require('../assets/crests/24.png'),
-  '25': require('../assets/crests/25.png'),
-  '26': require('../assets/crests/26.png'),
-  '27': require('../assets/crests/27.png'),
-  '28': require('../assets/crests/28.png'),
-  '29': require('../assets/crests/29.png'),
-  '30': require('../assets/crests/30.png'),
-  '31': require('../assets/crests/31.png'),
-  '32': require('../assets/crests/32.png'),
-  '33': require('../assets/crests/33.png'),
-  '34': require('../assets/crests/34.png'),
-  '35': require('../assets/crests/35.png'),
-  '36': require('../assets/crests/36.png'),
-  '37': require('../assets/crests/37.png'),
-  '38': require('../assets/crests/38.png'),
-  '39': require('../assets/crests/39.png'),
-  '40': require('../assets/crests/40.png'),
-  '41': require('../assets/crests/41.png'),
-  '42': require('../assets/crests/42.png'),
-  '43': require('../assets/crests/43.png'),
-  '44': require('../assets/crests/44.png'),
-  '45': require('../assets/crests/45.png'),
-  '46': require('../assets/crests/46.png'),
-  '47': require('../assets/crests/47.png'),
-  '48': require('../assets/crests/48.png'),
-  '49': require('../assets/crests/49.png'),
-  '50': require('../assets/crests/50.png'),
-  '51': require('../assets/crests/51.png'), 
-  '52': require('../assets/crests/52.png'),
-  '53': require('../assets/crests/53.png'),
-  '54': require('../assets/crests/54.png'),
-  '55': require('../assets/crests/55.png'),
-  '56': require('../assets/crests/56.png'),
-  '57': require('../assets/crests/57.png'),
-
-};
-
-
-const Logo = ({ id, size = 40, style }) => (
-  <Image source={logos[id]} style={[{ width: size, height: size }, style]} />
-);
+import { useNavigation }           from '@react-navigation/native';
+import { auth, db }                from '../firebaseConfig';
+import { doc, setDoc, arrayUnion } from 'firebase/firestore';
+import Logo                        from './Logo';
 
 const TEAMS = [
   { id: '1',  name: 'Manchester United' },      { id: '2',  name: 'Barcelona' },
@@ -112,188 +41,99 @@ const TEAMS = [
   { id: '56', name: 'Orlando Pirates' },
 ];
 
-const db = getFirestore();
-
-const TeamSelectionScreen = () => {
+export default function TeamSelectionScreen() {
   const [mainTeam, setMainTeam] = useState(null);
-  const [followingTeams, setFollowingTeams] = useState([]);
+  const [following, setFollowing] = useState([]);
   const [loading, setLoading] = useState(false);
+  const nav = useNavigation();
 
-  const navigation = useNavigation();
-  const { currentUser } = auth;
-
-
-  const handleSelect = (team) => {
-    if (mainTeam?.id === team.id) return setMainTeam(null);
-
-    const isFollowing = followingTeams.some((t) => t.id === team.id);
-    if (isFollowing)
-      return setFollowingTeams(followingTeams.filter((t) => t.id !== team.id));
-
-    if (!mainTeam) return setMainTeam(team);
-
-    if (followingTeams.length < 3)
-      return setFollowingTeams([...followingTeams, team]);
-
-    Alert.alert('Selection limit', 'You can only follow three teams');
+  const handleSelect = (t) => {
+    if (!mainTeam) return setMainTeam(t);
+    if (mainTeam.id === t.id) return setMainTeam(null);
+    const exists = following.some(f => f.id === t.id);
+    if (exists) return setFollowing(following.filter(f => f.id !== t.id));
+    if (following.length < 3) return setFollowing([...following, t]);
+    Alert.alert('Limit reached', 'You can only follow 3 teams');
   };
 
-  const statusOf = (team) =>
-    mainTeam?.id === team.id
-      ? 'main'
-      : followingTeams.some((t) => t.id === team.id)
-      ? 'following'
-      : 'none';
-
   const save = async () => {
-    if (!mainTeam)
-      return Alert.alert('Select a main team first');
-    if (followingTeams.length < 3)
-      return Alert.alert('Select three following teams');
+    if (!mainTeam) return Alert.alert('Select a main team first');
+    if (following.length < 3) return Alert.alert('Select 3 following teams');
 
     setLoading(true);
+    const uid = auth.currentUser.uid;
     try {
-      await setDoc(
-        doc(db, 'users', currentUser.uid),
-        {
-          mainTeam: { id: mainTeam.id, name: mainTeam.name },
-          followingTeams: followingTeams.map(({ id, name }) => ({ id, name })),
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true }
-      );
-      navigation.reset({ index: 0, routes: [{ name: 'MainApp' }] });
-    } catch (e) {
+      await setDoc(doc(db, 'users', uid), {
+        mainTeam: mainTeam,
+        followingTeams: following,
+        updatedAt: new Date().toISOString(),
+      }, { merge: true });
+
+      const participant = {
+        uid,
+        name: auth.currentUser.displayName || auth.currentUser.email,
+      };
+      const teams = [mainTeam, ...following];
+      await Promise.all(teams.map(team =>
+        setDoc(doc(db, 'teamChats', team.id), {
+          participants: arrayUnion(participant)
+        }, { merge: true })
+      ));
+
+      nav.reset({ index: 0, routes: [{ name: 'Tabs' }] });
+    } catch(e) {
       console.error(e);
-      Alert.alert('Error', 'Could not save your teams');
+      Alert.alert('Error', 'Could not save');
     } finally {
       setLoading(false);
     }
   };
+
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Select Your Teams</Text>
-
-      <View style={styles.instructionContainer}>
-        <Text style={styles.instruction}>Pick 1 main team and 3 to follow</Text>
-        <Text style={styles.selectionStatus}>
-          Main: {mainTeam ? mainTeam.name : '—'}
-        </Text>
-        <Text style={styles.selectionStatus}>
-          Following: {followingTeams.length}/3
-        </Text>
-      </View>
-
+      <Text style={styles.title}>Select 1 main + 3 to follow</Text>
       <FlatList
         data={TEAMS}
-        keyExtractor={(item) => item.id}
+        keyExtractor={i => i.id}
         renderItem={({ item }) => {
-          const status = statusOf(item);
+          const isMain = mainTeam?.id === item.id;
+          const isFollow = following.some(f => f.id === item.id);
           return (
             <TouchableOpacity
               style={[
-                styles.teamItem,
-                status === 'main' && styles.mainItem,
-                status === 'following' && styles.followItem,
+                styles.item,
+                isMain && styles.mainItem,
+                isFollow && styles.followItem
               ]}
               onPress={() => handleSelect(item)}
             >
-              <Logo id={item.id} style={{ marginRight: 12 }} />
-              <Text style={styles.teamName}>{item.name}</Text>
-
-              {status !== 'none' && (
-                <View
-                  style={[
-                    styles.badge,
-                    status === 'following' && styles.followBadge,
-                  ]}
-                >
-                  <Text style={styles.badgeText}>
-                    {status === 'main' ? 'Main' : 'Following'}
-                  </Text>
-                </View>
-              )}
+              <Logo id={item.id} style={{ marginRight: 8 }} />
+              <Text>{item.name}</Text>
             </TouchableOpacity>
           );
         }}
       />
-
       <TouchableOpacity
-        style={[
-          styles.saveButton,
-          (!mainTeam || followingTeams.length < 3) && styles.disabledButton,
-        ]}
+        style={[styles.button, loading && styles.disabled]}
         onPress={save}
-        disabled={!mainTeam || followingTeams.length < 3 || loading}
+        disabled={loading}
       >
-        {loading ? (
-          <ActivityIndicator color="#fff" />
-        ) : (
-          <Text style={styles.saveButtonText}>Continue</Text>
-        )}
+        {loading
+          ? <ActivityIndicator color="#fff"/>
+          : <Text style={styles.btnText}>Continue</Text>
+        }
       </TouchableOpacity>
     </View>
   );
-};
-
+}
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 16,
-    textAlign: 'center',
-  },
-  instructionContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-    elevation: 2,
-  },
-  instruction: { fontSize: 16, marginBottom: 8, textAlign: 'center' },
-  selectionStatus: { fontSize: 14, color: '#666', marginBottom: 4 },
-
-  teamItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-    elevation: 1,
-  },
-  mainItem: {
-    backgroundColor: '#e8f4ff',
-    borderWidth: 2,
-    borderColor: '#3498db',
-  },
-  followItem: {
-    backgroundColor: '#f0f9eb',
-    borderWidth: 1,
-    borderColor: '#67c23a',
-  },
-  teamName: { fontSize: 16, flex: 1 },
-
-  badge: {
-    backgroundColor: '#3498db',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-  },
-  followBadge: { backgroundColor: '#67c23a' },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-
-  saveButton: {
-    backgroundColor: '#3498db',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  disabledButton: { backgroundColor: '#b3b3b3' },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  container:{ flex:1, padding:16, backgroundColor:'#f5f5f5' },
+  title:    { fontSize:18, fontWeight:'bold', marginBottom:12 },
+  item:     { flexDirection:'row', alignItems:'center', padding:12, backgroundColor:'#fff', marginBottom:8, borderRadius:8 },
+  mainItem: { borderWidth:2, borderColor:'#3498db' },
+  followItem:{ borderWidth:1, borderColor:'#67c23a' },
+  button:   { backgroundColor:'#3498db', padding:16, borderRadius:8, alignItems:'center' },
+  disabled: { backgroundColor:'#999' },
+  btnText:  { color:'#fff', fontSize:16 }
 });
-
-export default TeamSelectionScreen;

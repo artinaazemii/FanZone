@@ -63,6 +63,12 @@ const logos = {
 };
 
 
-export const Logo = ({ id, size = 40, style }) => (
-  <Image source={logos[id]} style={[{ width: size, height: size }, style]} />
-);
+export default function Logo({ id, size = 40, style }) {
+  return (
+    <Image
+      source={logos[id]}
+      style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
+      resizeMode="contain"
+    />
+  );
+}

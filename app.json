@@ -7,22 +7,30 @@
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
+
     "ios": {
       "bundleIdentifier": "com.FanZoneApp.myapp",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Allow FanZone to access your photos so you can send images in chat."
+      }
     },
+
     "android": {
+      "package": "com.FanZoneApp.myapp",
+      "permissions": ["READ_MEDIA_IMAGES"],            
       "adaptiveIcon": {
-        "package": "com.FanZoneApp.myapp",
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
+
     "web": {
       "favicon": "./assets/favicon.png"
     }

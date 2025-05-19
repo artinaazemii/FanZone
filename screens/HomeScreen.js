@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import ProfileIcon from '../screens/ProfileIcon';
+import { ActivityIndicator, Linking } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 
@@ -568,6 +569,26 @@ export default function HomeScreen() {
   const [playMem,   setPlayMem]   = useState(false);
   const [playBall,  setPlayBall]  = useState(false);
 
+  const [news, setNews] = useState([]);
+const [loadingNews, setLoadingNews] = useState(true);
+
+useEffect(() => {
+  const fetchNews = async () => {
+    try {
+      const res = await fetch('https://newsdata.io/api/1/news?apikey=pub_87953313fec29d330e232a87b012687583be0&q=football&language=en');
+      const data = await res.json();
+      setNews(data.results || []);
+    } catch (error) {
+      console.error('News fetch error:', error);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
+
+  fetchNews();
+}, []);
+
+
   const goProfile = () => nav.navigate('Profile');
 
   if (playMem)  return <MemoryMatchGame onQuit={() => setPlayMem(false)} />;
@@ -607,6 +628,56 @@ export default function HomeScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.header}>
       </View>
+
+
+      
+      <View style={{ marginTop: 16 }}>
+  <Text style={{ fontSize: 20, fontWeight: 'bold', marginLeft: 16, marginBottom: 8 }}>
+    📰 Football News
+  </Text>
+
+  {loadingNews ? (
+    <ActivityIndicator size="large" />
+  ) : (
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
+      {news.slice(0, 10).map((item, idx) => (
+        <TouchableOpacity
+          key={idx}
+          onPress={() => Linking.openURL(item.link)}
+          style={{
+            width: 260,
+            marginRight: 12,
+            backgroundColor: '#fff',
+            borderRadius: 12,
+            elevation: 3,
+            overflow: 'hidden',
+          }}
+        >
+          {item.image_url ? (
+            <Image
+              source={{ uri: item.image_url }}
+              style={{ width: '100%', height: 140 }}
+              resizeMode="cover"
+            />
+          ) : (
+            <View style={{ width: '100%', height: 140, backgroundColor: '#ccc' }} />
+          )}
+          <View style={{ padding: 10 }}>
+            <Text style={{ fontSize: 15, fontWeight: '600' }} numberOfLines={2}>
+              {item.title}
+            </Text>
+            {item.description ? (
+              <Text style={{ fontSize: 13, color: '#555', marginTop: 4 }} numberOfLines={3}>
+                {item.description}
+              </Text>
+            ) : null}
+          </View>
+        </TouchableOpacity>
+      ))}
+    </ScrollView>
+  )}
+</View>
+
 
       <QuizList
         categories={quizCategoriesData}

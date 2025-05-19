@@ -17,6 +17,8 @@ import {
 } from "firebase/firestore";
 import Logo from "./Logo";
 
+
+
 const ensureChatDoc = async (team) => {
   const ref = doc(db, "teamChats", team.id);
   if (!(await getDoc(ref)).exists()) {

@@ -59,7 +59,7 @@ export default function App() {
           <Stack.Screen name="TeamSelection" component={TeamSelectionScreen} options={{headerShown:true,title:'Select Teams'}}/>
         ) : (
           <>
-            <Stack.Screen name="Tabs"       component={NavigationTabs}/>
+            <Stack.Screen name="Main" component={NavigationTabs}/>
             <Stack.Screen name="Profile"    component={ProfileScreen} options={{headerShown:true,title:'My Profile'}}/>
             <Stack.Screen name="Scoreboard" component={ScoreBoardScreen} options={{headerShown:true,title:'Scoreboard'}}/>
           </>

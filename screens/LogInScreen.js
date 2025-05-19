@@ -38,7 +38,8 @@ const LoginScreen = ({ navigation }) => {
       Alert.alert("Welcome", `Welcome ${displayName}!`);
 
       // Navigate to the main app screen after successful login
-      navigation.replace('Main');
+      // Nuk navigon fare – vetëm pret që App.js ta kuptojë që përdoruesi është loguar.
+
     } catch (error) {
       console.error("Login error:", error.message);
       Alert.alert("Login Failed", "Invalid password or email");

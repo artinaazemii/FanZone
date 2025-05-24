@@ -1,3 +1,4 @@
+// screens/ChatListScreen.js
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -6,89 +7,98 @@ import {
   TouchableOpacity,
   StyleSheet,
   ActivityIndicator,
+  Alert,
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebaseConfig";
-import {
-  doc,
-  getDoc,
-  setDoc,
-  serverTimestamp,
-} from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
 import Logo from "./Logo";
 
-
-
+// Ensure the chat document exists (with adminId if new)
 const ensureChatDoc = async (team) => {
-  const ref = doc(db, "teamChats", team.id);
-  if (!(await getDoc(ref)).exists()) {
-    await setDoc(ref, {
+  const chatRef = doc(db, "teamChats", team.id);
+  const snap = await getDoc(chatRef);
+  if (!snap.exists()) {
+    await setDoc(chatRef, {
       teamId: team.id,
       teamName: team.name,
+      adminId: auth.currentUser.uid,
       createdAt: serverTimestamp(),
     });
   }
 };
 
-const ensureMemberDoc = async (team) => {
-  const ref = doc(db, "teamChats", team.id, "members", auth.currentUser.uid);
-  const snap = await getDoc(ref);
-  const displayName = auth.currentUser.displayName || "User";
-
-  if (!snap.exists()) {
-    await setDoc(ref, { displayName, joinedAt: serverTimestamp() });
-  } else if (snap.data().displayName !== displayName) {
-    await setDoc(ref, { ...snap.data(), displayName });
-  }
-};
-
 export default function ChatListScreen() {
   const [chatTeams, setChatTeams] = useState([]);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const navigation = useNavigation();
 
   useEffect(() => {
-    const fetchTeams = async () => {
+    const fetchChats = async () => {
       try {
-        const userSnap = await getDoc(doc(db, "users", auth.currentUser.uid));
+        const userRef = doc(db, "users", auth.currentUser.uid);
+        const userSnap = await getDoc(userRef);
         if (!userSnap.exists()) return;
 
         const { mainTeam, followingTeams = [] } = userSnap.data();
         const all = [mainTeam, ...followingTeams].filter(Boolean);
-        const unique = Object.values(all.reduce((o, t) => ({ ...o, [t.id]: t }), {}));
-
-        await Promise.all(
-          unique.map(async (t) => {
-            await ensureChatDoc(t);
-            await ensureMemberDoc(t);
-          })
+        const unique = Object.values(
+          all.reduce((acc, t) => ({ ...acc, [t.id]: t }), {})
         );
 
+        // Ensure chat docs exist
+        await Promise.all(unique.map(ensureChatDoc));
+
+        // Show all chats; membership gating on tap
         setChatTeams(unique);
       } finally {
         setLoading(false);
       }
     };
-    fetchTeams();
+
+    fetchChats();
   }, []);
 
-  const openChat = (team) =>
-    navigation.navigate("TeamChat", { teamId: team.id, teamName: team.name });
+  const handlePress = async (team) => {
+    try {
+      const memSnap = await getDoc(
+        doc(db, "teamChats", team.id, "members", auth.currentUser.uid)
+      );
+      if (!memSnap.exists()) {
+        Alert.alert(
+          "Access denied",
+          "You have been removed from this chat by the admin."
+        );
+        return;
+      }
+      navigation.navigate("TeamChat", {
+        teamId: team.id,
+        teamName: team.name,
+      });
+    } catch (e) {
+      console.error("Error checking membership:", e);
+      Alert.alert("Error", "Could not verify access. Please try again.");
+    }
+  };
 
-  if (loading)
+  if (loading) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color="#3498db" />
       </View>
     );
+  }
 
   return (
     <View style={styles.container}>
       <FlatList
         data={chatTeams}
-        keyExtractor={(i) => i.id}
+        keyExtractor={(item) => item.id}
         renderItem={({ item }) => (
-          <TouchableOpacity style={styles.item} onPress={() => openChat(item)}>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => handlePress(item)}
+          >
             <Logo id={item.id} />
             <Text style={styles.title}>{item.name} Chat</Text>
           </TouchableOpacity>
@@ -100,7 +110,7 @@ export default function ChatListScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", padding: 16 },
-  loader:    { flex: 1, justifyContent: "center", alignItems: "center" },
+  loader: { flex: 1, justifyContent: "center", alignItems: "center" },
   item: {
     flexDirection: "row",
     alignItems: "center",

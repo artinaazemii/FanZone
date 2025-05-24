@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   RefreshControl,
   ScrollView,
   TouchableOpacity,
+  Platform,
 } from 'react-native';
 import moment from 'moment';
 
@@ -17,8 +18,9 @@ const Scoreboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [competition, setCompetition] = useState('PL');
+  const [section, setSection] = useState('today');
 
-  const availableCompetitions = [
+  const competitions = [
     { id: 'WC', name: 'World Cup' },
     { id: 'CL', name: 'Champions League' },
     { id: 'BL1', name: 'Bundesliga' },
@@ -27,329 +29,143 @@ const Scoreboard = () => {
     { id: 'PD', name: 'La Liga' },
     { id: 'EL', name: 'Europa League' },
     { id: 'EFL', name: 'EFL Championship' },
-    { id: 'L1', name: 'League One' },
-    { id: 'L2', name: 'League Two' },
-    { id: 'FAC', name: 'FA Cup' },
-    { id: 'FL1', name: 'Football League Trophy' },
   ];
 
-  const fetchMatches = async (compId) => {
+  const fetchMatches = useCallback(async () => {
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const response = await fetch(
-        `https://api.football-data.org/v4/competitions/${compId}/matches`,
-        {
-          headers: {
-            'X-Auth-Token': API_KEY,
-          },
-        }
+      const res = await fetch(
+        `https://api.football-data.org/v4/competitions/${competition}/matches`,
+        { headers: { 'X-Auth-Token': API_KEY } }
       );
-
-      if (response.status === 403) {
-        throw new Error('API token invalid or rate limit exceeded');
-      }
-
-      const data = await response.json();
-
-      if (!data.matches) {
-        throw new Error('No matches found in response');
-      }
-
-      setMatches(data.matches);
-    } catch (err) {
-      console.error('Fetch error:', err);
-      setError(err.message);
+      if (!res.ok) throw new Error('Fetch failed');
+      const data = await res.json();
+      setMatches(data.matches || []);
+    } catch (e) {
+      setError(e.message);
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchMatches(competition);
   }, [competition]);
 
-  const categorizeMatches = () => {
-    const todayStart = moment().startOf('day');
-    const todayEnd = moment().endOf('day');
+  useEffect(() => { fetchMatches(); }, [fetchMatches]);
 
-    const pastMatches = matches
-      .filter(
-        (match) =>
-          moment(match.utcDate).isBefore(todayStart) ||
-          (match.status === 'FINISHED' && moment(match.utcDate).isBefore(todayEnd))
-      )
-      .sort((a, b) => moment(b.utcDate).diff(moment(a.utcDate)));
-
-    const todayMatches = matches
-      .filter((match) =>
-        moment(match.utcDate).isBetween(todayStart, todayEnd, null, '[]')
-      )
-      .sort((a, b) => moment(a.utcDate).diff(moment(b.utcDate)));
-
-    const upcomingMatches = matches
-      .filter((match) => moment(match.utcDate).isAfter(todayEnd))
-      .sort((a, b) => moment(a.utcDate).diff(moment(b.utcDate)));
-
-    return { pastMatches, todayMatches, upcomingMatches };
+  const todayStart = moment().startOf('day');
+  const todayEnd = moment().endOf('day');
+  const sectionsData = {
+    upcoming: matches.filter(m => moment(m.utcDate).isAfter(todayEnd)),
+    today: matches.filter(m => moment(m.utcDate).isBetween(todayStart, todayEnd, null, '[]')),
+    past: matches.filter(m => moment(m.utcDate).isBefore(todayStart)),
   };
 
-  const { pastMatches, todayMatches, upcomingMatches } = categorizeMatches();
+  const renderMatch = ({ item }) => {
+    const live = ['IN_PLAY','PAUSED'].includes(item.status);
+    return (
+      <View style={[styles.card, live && styles.cardLive]}>
+        <Text style={styles.date}>{moment(item.utcDate).format('MMM D, HH:mm')}</Text>
+        <View style={styles.scoreRow}>
+          <Text style={styles.team}>{item.homeTeam.name}</Text>
+          <Text style={styles.score}>{item.score.fullTime.home ?? '-'}</Text>
+        </View>
+        <View style={styles.scoreRow}>
+          <Text style={styles.team}>{item.awayTeam.name}</Text>
+          <Text style={styles.score}>{item.score.fullTime.away ?? '-'}</Text>
+        </View>
+        <Text style={[styles.status, live ? styles.liveText : item.status==='FINISHED' ? styles.finishedText : {}]}>
+          {live? 'LIVE' : item.status==='FINISHED'? 'FT' : moment(item.utcDate).format('HH:mm')}
+        </Text>
+      </View>
+    );
+  };
 
-  const renderMatch = ({ item }) => (
-    <View
-      style={[
-        styles.matchContainer,
-        (item.status === 'IN_PLAY' || item.status === 'PAUSED') && styles.liveMatchBox,
-      ]}
-    >
-      <Text style={styles.matchDate}>
-        {moment(item.utcDate).format('MMM D, HH:mm')}
-      </Text>
-      <View style={styles.teamRow}>
-        <Text style={styles.teamName}>{item.homeTeam.name}</Text>
-        <Text style={styles.score}>
-          {item.score.fullTime.home !== null ? item.score.fullTime.home : '-'}
-        </Text>
-      </View>
-      <View style={styles.teamRow}>
-        <Text style={styles.teamName}>{item.awayTeam.name}</Text>
-        <Text style={styles.score}>
-          {item.score.fullTime.away !== null ? item.score.fullTime.away : '-'}
-        </Text>
-      </View>
-      <Text
-        style={[
-          styles.status,
-          (item.status === 'IN_PLAY' || item.status === 'PAUSED') && styles.live,
-          item.status === 'FINISHED' && styles.finished,
-        ]}
-      >
-        {item.status === 'IN_PLAY'
-          ? 'LIVE'
-          : item.status === 'PAUSED'
-          ? 'HT'
-          : item.status === 'FINISHED'
-          ? 'FT'
-          : moment(item.utcDate).format('HH:mm')}
-      </Text>
+  if (loading && !matches.length) return <View style={styles.center}><ActivityIndicator size='large'/></View>;
+  if (error) return (
+    <View style={styles.center}>
+      <Text style={styles.error}>Error: {error}</Text>
+      <TouchableOpacity style={styles.retryBtn} onPress={fetchMatches}>
+        <Text style={styles.retryText}>Retry</Text>
+      </TouchableOpacity>
     </View>
   );
 
-  const renderSection = (title, matches) => {
-    if (matches.length === 0) return null;
-
-    return (
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>{title}</Text>
-        <FlatList
-          data={matches}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderMatch}
-          scrollEnabled={false}
-        />
-      </View>
-    );
-  };
-
-  if (loading && matches.length === 0) {
-    return (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" />
-      </View>
-    );
-  }
-
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Text style={styles.error}>Error: {error}</Text>
-        <Text style={styles.note}>Note: Free tier has limited requests</Text>
-        <TouchableOpacity
-          style={styles.retryButton}
-          onPress={() => fetchMatches(competition)}
-        >
-          <Text style={styles.retryText}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
     <View style={styles.container}>
-      <View style={styles.selectorContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {availableCompetitions.map((comp) => (
+      {/* Fixed header bars */}
+      <View style={styles.header}>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.compBarContent}
+        >
+          {competitions.map(c => (
             <TouchableOpacity
-              key={comp.id}
-              style={[
-                styles.competitionButton,
-                competition === comp.id && styles.selectedButton,
-              ]}
-              onPress={() => setCompetition(comp.id)}
+              key={c.id}
+              style={[styles.compBtn, competition===c.id && styles.compBtnSel]}
+              onPress={() => { setCompetition(c.id); setSection('today'); }}
             >
-              <Text
-                style={[
-                  styles.competitionText,
-                  competition === comp.id && styles.selectedText,
-                ]}
-              >
-                {comp.name}
-              </Text>
+              <Text style={[styles.compText, competition===c.id && styles.compTextSel]}> {c.name} </Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
+        <View style={styles.tabBar}>
+          {['upcoming','today','past'].map(key => (
+            <TouchableOpacity
+              key={key}
+              style={[styles.tabBtn, section===key && styles.tabBtnSel]}
+              onPress={() => setSection(key)}
+            >
+              <Text style={[styles.tabText, section===key && styles.tabTextSel]}> {key.charAt(0).toUpperCase()+key.slice(1)} </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
 
-      <ScrollView
-        refreshControl={
-          <RefreshControl
-            refreshing={loading}
-            onRefresh={() => fetchMatches(competition)}
-          />
-        }
-        contentContainerStyle={styles.scrollContainer}
-      >
-        <View style={styles.columnsContainer}>
-          <View style={styles.column}>
-            {renderSection('Past Matches', pastMatches)}
-          </View>
-          <View style={styles.column}>
-            {renderSection('Today Matches', todayMatches)}
-          </View>
-          <View style={styles.column}>
-            {renderSection('Upcoming Matches', upcomingMatches)}
-          </View>
-        </View>
-      </ScrollView>
+      {/* Content below header */}
+      <FlatList
+        style={styles.content}
+        data={sectionsData[section]}
+        keyExtractor={i => i.id.toString()}
+        renderItem={renderMatch}
+        contentContainerStyle={styles.list}
+        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchMatches}/>}      
+        ListEmptyComponent={<Text style={styles.empty}>No matches</Text>}
+      />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#f5f5f5',
+  container: { flex:1, backgroundColor:'#eef2f5' },
+  header: { backgroundColor:'#fff' },
+  compBarContent: { paddingHorizontal:8, height:50, alignItems:'center' },
+  compBtn: { marginRight:8, paddingVertical:6, paddingHorizontal:12, borderRadius:20, backgroundColor:'#d0d0d0' },
+  compBtnSel: { backgroundColor:'#1565c0' },
+  compText: { color:'#333', fontSize:12 },
+  compTextSel: { color:'#fff', fontWeight:'600' },
+  tabBar: { flexDirection:'row', justifyContent:'space-around', backgroundColor:'#fafafa', height:40, alignItems:'center' },
+  tabBtn: { paddingHorizontal:10, borderBottomWidth:2, borderBottomColor:'transparent' },
+  tabBtnSel: { borderBottomColor:'#1565c0' },
+  tabText: { fontSize:14, color:'#555' },
+  tabTextSel: { color:'#1565c0', fontWeight:'600' },
+  content: { flex:1 },
+  list: { padding:8, paddingBottom:80 },
+  card: { backgroundColor:'#fff', borderRadius:8, padding:12, marginBottom:8,
+    ...Platform.select({ ios:{ shadowColor:'#000', shadowOpacity:0.1, shadowRadius:4, shadowOffset:{ width:0, height:2 } }, android:{ elevation:2 } })
   },
-  selectorContainer: {
-    paddingVertical: 8,
-    paddingHorizontal: 4,
-    backgroundColor: '#e3e3e3',
-  },
-  competitionButton: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    backgroundColor: '#ccc',
-    marginHorizontal: 4,
-  },
-  selectedButton: {
-    backgroundColor: '#1e88e5',
-  },
-  competitionText: {
-    fontSize: 14,
-    color: '#333',
-  },
-  selectedText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  columnsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  column: {
-    flex: 1,
-    paddingHorizontal: 4,
-  },
-  section: {
-    marginVertical: 8,
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 8,
-    elevation: 2,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-    textAlign: 'center',
-    color: '#444',
-  },
-  matchContainer: {
-    borderBottomWidth: 1,
-    borderBottomColor: '#ccc',
-    paddingVertical: 6,
-  },
-  teamRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginVertical: 2,
-  },
-  teamName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-  },
-  score: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  matchDate: {
-    fontSize: 12,
-    color: '#666',
-    marginBottom: 4,
-    textAlign: 'center',
-  },
-  status: {
-    fontSize: 12,
-    fontWeight: '600',
-    textAlign: 'center',
-    marginTop: 4,
-  },
-  live: {
-    color: 'red',
-  },
-  finished: {
-    color: '#4caf50',
-  },
-  liveMatchBox: {
-    backgroundColor: '#ffeaea',
-    borderRadius: 6,
-    padding: 6,
-    marginVertical: 4,
-  },
-  scrollContainer: {
-    padding: 8,
-    paddingBottom: 100,
-  },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  error: {
-    fontSize: 16,
-    color: 'red',
-    marginBottom: 8,
-  },
-  note: {
-    fontSize: 12,
-    color: '#777',
-    marginBottom: 12,
-  },
-  retryButton: {
-    padding: 10,
-    backgroundColor: '#1e88e5',
-    borderRadius: 6,
-  },
-  retryText: {
-    color: '#fff',
-    fontWeight: 'bold',
-  },
+  cardLive: { borderLeftWidth:4, borderLeftColor:'#d32f2f' },
+  date: { fontSize:12, color:'#666', marginBottom:6, textAlign:'center' },
+  scoreRow: { flexDirection:'row', justifyContent:'space-between', marginVertical:2 },
+  team: { fontSize:14, fontWeight:'600', color:'#333' },
+  score: { fontSize:14,fontWeight:'700' },
+  status: { marginTop:6,textAlign:'center',fontSize:12,fontWeight:'600' },
+  liveText: { color:'#d32f2f' },
+  finishedText: { color:'#388e3c' },
+  center: { flex:1,justifyContent:'center',alignItems:'center' },
+  error: { color:'red',marginBottom:8 },
+  retryBtn: { backgroundColor:'#1565c0',padding:10,borderRadius:6 },
+  retryText: { color:'#fff',fontWeight:'600' },
+  empty: { textAlign:'center',color:'#777',marginTop:20 },
 });
 
 export default Scoreboard;

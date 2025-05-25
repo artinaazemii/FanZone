@@ -1,7 +1,9 @@
+// Navigation.js
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
-import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
-import { FontAwesome, Ionicons } from "@expo/vector-icons";
+import { View, Image, StyleSheet } from "react-native";
+import { FontAwesome } from "@expo/vector-icons";
 
 import HomeScreen from "../screens/HomeScreen";
 import ScoreBoardScreen from "../screens/ScoreBoardScreen";
@@ -13,6 +15,7 @@ import CartScreen from "../screens/CartScreen";
 import DeliveryDetailsScreen from "../screens/DeliveryDetailsScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import TeamChatScreen from "../screens/TeamChatScreen";
+import ProfileIcon from "../screens/ProfileIcon";    // ← new
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -25,31 +28,31 @@ function CustomHeader() {
 function Tabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route, navigation }) => ({
+      screenOptions={({ route }) => ({
         tabBarStyle: {
           height: 60,
           paddingBottom: 5,
           backgroundColor: "white",
         },
         tabBarIcon: ({ color, size }) => {
-          let icon;
-          if (route.name === "Home") icon = "home";
-          else if (route.name === "Chats") icon = "comments";
-          else if (route.name === "Score Board") icon = "soccer-ball-o";
-          else if (route.name === "Store") icon = "shopping-cart";
-          return <FontAwesome name={icon} size={size} color={color} />;
+          let iconName;
+          if (route.name === "Home") iconName = "home";
+          else if (route.name === "Chats") iconName = "comments";
+          else if (route.name === "Score Board") iconName = "soccer-ball-o";
+          else if (route.name === "Store") iconName = "shopping-cart";
+          return <FontAwesome name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: "black",
         tabBarInactiveTintColor: "gray",
+
         headerTitle: () => <CustomHeader />,
         headerTitleAlign: "center",
+
+        // ← replace the generic icon with your ProfileIcon
         headerRight: () => (
-          <TouchableOpacity
-            style={{ marginRight: 15 }}
-            onPress={() => navigation.navigate("Profile")}
-          >
-            <Ionicons name="person-circle-outline" size={30} color="black" />
-          </TouchableOpacity>
+          <View style={{ marginRight: 15 }}>
+            <ProfileIcon size={30} />
+          </View>
         ),
       })}
     >
@@ -78,12 +81,13 @@ export default function Navigation() {
           headerTitle: route.params.teamName,
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
               onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />
@@ -96,15 +100,17 @@ export default function Navigation() {
           headerTitle: "Cart Details",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+              onPress={() => navigation.goBack()}
+            />
           ),
         })}
       />
+
       <Stack.Screen
         name="TeamProducts"
         component={TeamProductsScreen}
@@ -112,15 +118,17 @@ export default function Navigation() {
           headerTitle: route.params.teamName.toUpperCase(),
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
               onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />
+
       <Stack.Screen
         name="DeliveryDetails"
         component={DeliveryDetailsScreen}
@@ -128,22 +136,24 @@ export default function Navigation() {
           headerTitle: "Add Delivery Details",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
               onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />
+
       <Stack.Screen
         name="ProductDetail"
         component={ProductDetailScreen}
         options={{ title: "Product Detail" }}
       />
 
-      {/* Profile & Scoreboard */}
+      {/* Profile */}
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
@@ -151,15 +161,18 @@ export default function Navigation() {
           headerTitle: () => <CustomHeader />,
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
               onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />
+
+      {/* Extra Scoreboard route if needed */}
       <Stack.Screen
         name="Scoreboard"
         component={ScoreBoardScreen}
@@ -167,12 +180,13 @@ export default function Navigation() {
           headerTitle: "Scoreboard",
           headerTitleAlign: "center",
           headerLeft: () => (
-            <TouchableOpacity
+            <FontAwesome
+              name="arrow-left"
+              size={24}
+              color="black"
               style={{ marginLeft: 15 }}
               onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
-            </TouchableOpacity>
+            />
           ),
         })}
       />

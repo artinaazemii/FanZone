@@ -1,5 +1,6 @@
+// screens/Logo.js
 import React from 'react';
-import { Image } from 'react-native';
+import { View, Image } from 'react-native';
 
 const logos = {
   '1':  require('../assets/crests/1.png'),
@@ -52,23 +53,36 @@ const logos = {
   '48': require('../assets/crests/48.png'),
   '49': require('../assets/crests/49.png'),
   '50': require('../assets/crests/50.png'),
-  '51': require('../assets/crests/51.png'), 
+  '51': require('../assets/crests/51.png'),
   '52': require('../assets/crests/52.png'),
   '53': require('../assets/crests/53.png'),
   '54': require('../assets/crests/54.png'),
   '55': require('../assets/crests/55.png'),
   '56': require('../assets/crests/56.png'),
   '57': require('../assets/crests/57.png'),
-
 };
-
 
 export default function Logo({ id, size = 40, style }) {
   return (
-    <Image
-      source={logos[id]}
-      style={[{ width: size, height: size, borderRadius: size / 2 }, style]}
-      resizeMode="contain"
-    />
+    <View
+      style={[
+        {
+          width: size,
+          height: size,
+          justifyContent: 'center',
+          alignItems: 'center',
+        },
+        style,
+      ]}
+    >
+      <Image
+        source={logos[id]}
+        style={{
+          width: size * 0.9,
+          height: size * 0.9,
+          resizeMode: 'contain',
+        }}
+      />
+    </View>
   );
 }

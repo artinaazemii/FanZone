@@ -1,31 +1,55 @@
-import React from 'react';
-import { TouchableOpacity, Image, StyleSheet, View, Text } from 'react-native';
+// ProfileIcon.js
+import React, { useState, useEffect } from 'react';
+import {
+  TouchableOpacity,
+  Image,
+  StyleSheet,
+  View,
+  Text,
+} from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../firebaseConfig';
+import { onAuthStateChanged } from 'firebase/auth';
 
 const ProfileIcon = ({ size = 40, onPress }) => {
   const navigation = useNavigation();
-  const user = auth.currentUser;
+  // keep local copy of photoURL
+  const [photoURL, setPhotoURL] = useState(auth.currentUser?.photoURL);
+
+  useEffect(() => {
+    // subscribe to any changes (including updateProfile)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setPhotoURL(user?.photoURL);
+    });
+    return unsubscribe;
+  }, []);
 
   const handlePress = () => {
-    if (onPress) {
-      onPress();
-    } else {
-      navigation.navigate('Profile');
-    }
+    if (onPress) return onPress();
+    navigation.navigate('Profile');
   };
 
   return (
     <TouchableOpacity onPress={handlePress} style={styles.container}>
-      {user?.photoURL ? (
-        <Image 
-          source={{ uri: user.photoURL }} 
-          style={[styles.avatar, { width: size, height: size }]} 
+      {photoURL ? (
+        <Image
+          source={{ uri: photoURL }}
+          style={[
+            styles.avatar,
+            { width: size, height: size, borderRadius: size / 2 },
+          ]}
         />
       ) : (
-        <View style={[styles.defaultAvatar, { width: size, height: size }]}>
+        <View
+          style={[
+            styles.defaultAvatar,
+            { width: size, height: size, borderRadius: size / 2 },
+          ]}
+        >
           <Text style={styles.defaultAvatarText}>
-            {user?.displayName?.charAt(0) || user?.email?.charAt(0) || '?'}
+            {auth.currentUser?.displayName?.charAt(0) ||
+              auth.currentUser?.email?.charAt(0) ||
+              '?'}
           </Text>
         </View>
       )}
@@ -34,16 +58,12 @@ const ProfileIcon = ({ size = 40, onPress }) => {
 };
 
 const styles = StyleSheet.create({
-  container: {
-    position: 'relative',
-  },
+  container: { marginRight: 12 },
   avatar: {
-    borderRadius: 20,
     borderWidth: 2,
     borderColor: '#fff',
   },
   defaultAvatar: {
-    borderRadius: 20,
     backgroundColor: '#3498db',
     justifyContent: 'center',
     alignItems: 'center',
@@ -52,9 +72,7 @@ const styles = StyleSheet.create({
   },
   defaultAvatarText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: 'bold',
-    textTransform: 'uppercase',
   },
 });
 

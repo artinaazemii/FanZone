@@ -14,14 +14,18 @@ import DeliveryDetailsScreen from "../screens/DeliveryDetailsScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import TeamChatScreen from "../screens/TeamChatScreen";
 import MatchingPairsScreen from "../screens/MatchingPairsScreen";
-import QuizzesScreen from "../screens/QuizzesScreen"; // Add this import
+import QuizzesScreen from "../screens/QuizzesScreen";
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const logo = require("../assets/logo.png");
+const logo = require("../assets/FanZoneLogo.png");
 
 function CustomHeader() {
-  return <Image source={logo} style={styles.logo} />;
+  return (
+    <View style={styles.headerContainer}>
+      <Image source={logo} style={styles.logo} />
+    </View>
+  );
 }
 
 function Tabs() {
@@ -45,6 +49,9 @@ function Tabs() {
         tabBarInactiveTintColor: "gray",
         headerTitle: () => <CustomHeader />,
         headerTitleAlign: "center",
+        headerStyle: {
+          height: 90, // Slightly increased header height to accommodate logo
+        },
         headerRight: () => (
           <TouchableOpacity
             style={{ marginRight: 15 }}
@@ -76,13 +83,13 @@ export default function Navigation() {
       <Stack.Screen
         name="MatchingPairs"
         component={MatchingPairsScreen}
-        options={{ headerShown: false }} // Hide header since the game has its own
+        options={{ headerShown: false }}
       />
       
       <Stack.Screen
         name="Quizzes"
         component={QuizzesScreen}
-        options={{ headerShown: false }} // Hide header since QuizzesScreen has its own
+        options={{ headerShown: false }}
       />
 
       {/* Team Chat */}
@@ -165,6 +172,9 @@ export default function Navigation() {
         options={({ navigation }) => ({
           headerTitle: () => <CustomHeader />,
           headerTitleAlign: "center",
+          headerStyle: {
+            height: 90, // Consistent header height for logo
+          },
           headerLeft: () => (
             <TouchableOpacity
               style={{ marginLeft: 15 }}
@@ -196,9 +206,16 @@ export default function Navigation() {
 }
 
 const styles = StyleSheet.create({
+  headerContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 5,
+  },
   logo: {
-    width: 100,
-    height: 70,
+    width: 80,        // Reduced from 100 for better mobile fit
+    height: 45,       // Reduced from 70 for better mobile fit
     resizeMode: "contain",
+    maxWidth: '100%', // Ensures logo doesn't overflow on smaller screens
   },
 });

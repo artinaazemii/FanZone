@@ -13,6 +13,8 @@ import CartScreen from "../screens/CartScreen";
 import DeliveryDetailsScreen from "../screens/DeliveryDetailsScreen";
 import ChatListScreen from "../screens/ChatListScreen";
 import TeamChatScreen from "../screens/TeamChatScreen";
+import MatchingPairsScreen from "../screens/MatchingPairsScreen";
+import QuizzesScreen from "../screens/QuizzesScreen"; // Add this import
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -68,6 +70,19 @@ export default function Navigation() {
         name="MainTabs"
         component={Tabs}
         options={{ headerShown: false }}
+      />
+
+      {/* Games */}
+      <Stack.Screen
+        name="MatchingPairs"
+        component={MatchingPairsScreen}
+        options={{ headerShown: false }} // Hide header since the game has its own
+      />
+      
+      <Stack.Screen
+        name="Quizzes"
+        component={QuizzesScreen}
+        options={{ headerShown: false }} // Hide header since QuizzesScreen has its own
       />
 
       {/* Team Chat */}

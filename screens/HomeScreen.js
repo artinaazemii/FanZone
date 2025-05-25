@@ -10,7 +10,7 @@ import {
   Linking,
 } from 'react-native';
 
-export default function HomeScreen() {
+export default function HomeScreen({ navigation }) {
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
 
@@ -76,10 +76,7 @@ export default function HomeScreen() {
       <View style={styles.gamesGrid}>
         <TouchableOpacity
           style={styles.gameCard}
-          onPress={() => {
-            // TODO: navigate to Matching Pairs screen
-            console.log('Navigating to Matching Pairs');
-          }}
+          onPress={() => navigation.navigate('MatchingPairs')}
         >
           <Image
             source={require('../assets/MatchingPairs.png')}
@@ -88,12 +85,10 @@ export default function HomeScreen() {
           />
           <Text style={styles.gameText}>Matching Pairs</Text>
         </TouchableOpacity>
+        
         <TouchableOpacity
           style={styles.gameCard}
-          onPress={() => {
-            // TODO: navigate to Quizzes screen
-            console.log('Navigating to Quizzes');
-          }}
+          onPress={() => navigation.navigate('Quizzes')}
         >
           <Image
             source={require('../assets/Quizzes.png')}
@@ -121,6 +116,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 16,
     marginBottom: 8,
+    color: '#333',
   },
   newsContainer: {
     paddingHorizontal: 16,
@@ -131,6 +127,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
     overflow: 'hidden',
   },
   cardImage: {
@@ -140,25 +143,32 @@ const styles = StyleSheet.create({
   cardPlaceholder: {
     width: '100%',
     height: 140,
-    backgroundColor: '#ccc',
+    backgroundColor: '#e0e0e0',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   cardContent: {
-    padding: 10,
+    padding: 12,
   },
   cardTitle: {
     fontSize: 15,
     fontWeight: '600',
+    color: '#333',
+    lineHeight: 20,
   },
   cardDescription: {
     fontSize: 13,
-    color: '#555',
-    marginTop: 4,
+    color: '#666',
+    marginTop: 6,
+    lineHeight: 18,
   },
   subHeaderText: {
     fontSize: 20,
     fontWeight: 'bold',
     marginLeft: 16,
-    marginVertical: 12,
+    marginTop: 24,
+    marginBottom: 12,
+    color: '#333',
   },
   gamesGrid: {
     flexDirection: 'row',
@@ -173,7 +183,14 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     paddingVertical: 20,
-    elevation: 2,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 3.84,
   },
   gameIcon: {
     width: 80,
@@ -184,5 +201,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#fff',
     fontWeight: '500',
+    textAlign: 'center',
   },
 });

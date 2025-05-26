@@ -1,3 +1,4 @@
+import React from "react";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
@@ -15,50 +16,42 @@ import ChatListScreen from "../screens/ChatListScreen";
 import TeamChatScreen from "../screens/TeamChatScreen";
 import MatchingPairsScreen from "../screens/MatchingPairsScreen";
 import QuizzesScreen from "../screens/QuizzesScreen";
+import ProfileIcon from "../screens/ProfileIcon"; // Custom profile icon
+import QuizGameScreen from "../screens/QuizGameScreen"; // Assuming this is a screen for quizzes
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const logo = require("../assets/FanZoneLogo.png");
+const logo = require("../assets/logo.png");
 
 function CustomHeader() {
-  return (
-    <View style={styles.headerContainer}>
-      <Image source={logo} style={styles.logo} />
-    </View>
-  );
+  return <Image source={logo} style={styles.logo} />;
 }
 
 function Tabs() {
   return (
     <Tab.Navigator
-      screenOptions={({ route, navigation }) => ({
+      screenOptions={({ route }) => ({
         tabBarStyle: {
           height: 60,
           paddingBottom: 5,
           backgroundColor: "white",
         },
         tabBarIcon: ({ color, size }) => {
-          let icon;
-          if (route.name === "Home") icon = "home";
-          else if (route.name === "Chats") icon = "comments";
-          else if (route.name === "Score Board") icon = "soccer-ball-o";
-          else if (route.name === "Store") icon = "shopping-cart";
-          return <FontAwesome name={icon} size={size} color={color} />;
+          let iconName;
+          if (route.name === "Home") iconName = "home";
+          else if (route.name === "Chats") iconName = "comments";
+          else if (route.name === "Score Board") iconName = "soccer-ball-o";
+          else if (route.name === "Store") iconName = "shopping-cart";
+          return <FontAwesome name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: "black",
         tabBarInactiveTintColor: "gray",
         headerTitle: () => <CustomHeader />,
         headerTitleAlign: "center",
-        headerStyle: {
-          height: 90, // Slightly increased header height to accommodate logo
-        },
         headerRight: () => (
-          <TouchableOpacity
-            style={{ marginRight: 15 }}
-            onPress={() => navigation.navigate("Profile")}
-          >
-            <Ionicons name="person-circle-outline" size={30} color="black" />
-          </TouchableOpacity>
+          <View style={{ marginRight: 15 }}>
+            <ProfileIcon size={30} />
+          </View>
         ),
       })}
     >
@@ -85,14 +78,28 @@ export default function Navigation() {
         component={MatchingPairsScreen}
         options={{ headerShown: false }}
       />
-      
       <Stack.Screen
         name="Quizzes"
         component={QuizzesScreen}
         options={{ headerShown: false }}
       />
-
-      {/* Team Chat */}
+<Stack.Screen
+        name="QuizGame"
+        component={QuizGameScreen}
+        options={({ route, navigation }) => ({
+          headerTitle: route.params?.quiz?.title || "Quiz Game",
+          headerTitleAlign: "center",
+          headerLeft: () => (
+            <TouchableOpacity
+              style={{ marginLeft: 15 }}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="black" />
+            </TouchableOpacity>
+          ),
+        })}
+      />
+      {/* Chat */}
       <Stack.Screen
         name="TeamChat"
         component={TeamChatScreen}
@@ -110,7 +117,7 @@ export default function Navigation() {
         })}
       />
 
-      {/* Cart & Store */}
+      {/* Store-related screens */}
       <Stack.Screen
         name="Cart"
         component={CartScreen}
@@ -165,16 +172,13 @@ export default function Navigation() {
         options={{ title: "Product Detail" }}
       />
 
-      {/* Profile & Scoreboard */}
+      {/* Profile */}
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
         options={({ navigation }) => ({
           headerTitle: () => <CustomHeader />,
           headerTitleAlign: "center",
-          headerStyle: {
-            height: 90, // Consistent header height for logo
-          },
           headerLeft: () => (
             <TouchableOpacity
               style={{ marginLeft: 15 }}
@@ -185,6 +189,8 @@ export default function Navigation() {
           ),
         })}
       />
+
+      {/* Scoreboard detail (optional if different from main tab) */}
       <Stack.Screen
         name="Scoreboard"
         component={ScoreBoardScreen}
@@ -206,16 +212,9 @@ export default function Navigation() {
 }
 
 const styles = StyleSheet.create({
-  headerContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingVertical: 5,
-  },
   logo: {
-    width: 80,        // Reduced from 100 for better mobile fit
-    height: 45,       // Reduced from 70 for better mobile fit
+    width: 100,
+    height: 70,
     resizeMode: "contain",
-    maxWidth: '100%', // Ensures logo doesn't overflow on smaller screens
   },
 });

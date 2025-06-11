@@ -6,39 +6,49 @@ import {
   ScrollView,
   TouchableOpacity,
   SafeAreaView,
-  AsyncStorage,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useCoins } from '../context/CoinContext'; // Make sure the path is correct
 
 export default function QuizzesScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('quizzes');
   const [completedQuizzes, setCompletedQuizzes] = useState([]);
+  const [perfectQuizzes, setPerfectQuizzes] = useState([]);
+  const { coins } = useCoins();
 
-  // Load completed quizzes from storage when component mounts
   useEffect(() => {
-    loadCompletedQuizzes();
+    loadQuizzesData();
+    const unsubscribe = navigation.addListener('focus', loadQuizzesData);
+    return unsubscribe;
   }, []);
 
-  const loadCompletedQuizzes = async () => {
+  const loadQuizzesData = async () => {
     try {
       const completed = await AsyncStorage.getItem('completedQuizzes');
-      if (completed) {
-        setCompletedQuizzes(JSON.parse(completed));
-      }
+      const perfect = await AsyncStorage.getItem('perfectQuizzes');
+      setCompletedQuizzes(completed ? JSON.parse(completed) : []);
+      setPerfectQuizzes(perfect ? JSON.parse(perfect) : []);
     } catch (error) {
-      console.error('Error loading completed quizzes:', error);
+      console.error('Error loading quizzes:', error);
     }
   };
 
-  const markQuizAsCompleted = async (quizId) => {
-    try {
-      const updatedCompleted = [...completedQuizzes, quizId];
+  const markQuizStatus = async (quizId, isPerfect) => {
+    let updatedCompleted = completedQuizzes;
+    if (!completedQuizzes.includes(quizId)) {
+      updatedCompleted = [...completedQuizzes, quizId];
       setCompletedQuizzes(updatedCompleted);
       await AsyncStorage.setItem('completedQuizzes', JSON.stringify(updatedCompleted));
-    } catch (error) {
-      console.error('Error saving completed quiz:', error);
+    }
+
+    if (isPerfect && !perfectQuizzes.includes(quizId)) {
+      const updatedPerfect = [...perfectQuizzes, quizId];
+      setPerfectQuizzes(updatedPerfect);
+      await AsyncStorage.setItem('perfectQuizzes', JSON.stringify(updatedPerfect));
     }
   };
 
+  // ------------------ QUIZ DATA ------------------------
   const quizzes = [
     {
       id: 1,
@@ -237,13 +247,33 @@ export default function QuizzesScreen({ navigation }) {
     }
   ];
 
+  // --- Achievements Logic ---
+  const getAchievements = () => {
+    let achievements = [];
+    const perfectCount = perfectQuizzes.length;
+    const coinCount = coins;
+
+    if (perfectCount >= 1) achievements.push({ name: "First Perfect!", desc: "Get a perfect score in one quiz.", done: true });
+    else achievements.push({ name: "First Perfect!", desc: "Get a perfect score in one quiz.", done: false });
+
+    if (perfectCount >= 3) achievements.push({ name: "Quiz Master", desc: "Get a perfect score in 3 quizzes.", done: true });
+    else achievements.push({ name: "Quiz Master", desc: "Get a perfect score in 3 quizzes.", done: false });
+
+    if (perfectCount >= 5) achievements.push({ name: "Undefeated", desc: "Perfect all quizzes!", done: true });
+    else achievements.push({ name: "Undefeated", desc: "Perfect all quizzes!", done: false });
+
+    if (coinCount >= 100) achievements.push({ name: "100 Club", desc: "Earn 100 coins.", done: true });
+    else achievements.push({ name: "100 Club", desc: "Earn 100 coins.", done: false });
+
+    return achievements;
+  };
+
   const handleQuizPress = (quiz) => {
-    if (!completedQuizzes.includes(quiz.id)) {
-      navigation.navigate('QuizGame', { 
-        quiz: quiz, 
-        onComplete: () => markQuizAsCompleted(quiz.id) 
-      });
-    }
+    navigation.navigate('QuizGame', {
+      quiz: quiz,
+      onComplete: (result) => markQuizStatus(quiz.id, result.isPerfect),
+      alreadyPerfect: perfectQuizzes.includes(quiz.id),
+    });
   };
 
   const getDifficultyColor = (difficulty) => {
@@ -257,7 +287,8 @@ export default function QuizzesScreen({ navigation }) {
 
   const renderQuizCard = (quiz) => {
     const isCompleted = completedQuizzes.includes(quiz.id);
-    
+    const isPerfect = perfectQuizzes.includes(quiz.id);
+
     return (
       <View key={quiz.id} style={[styles.quizCard, isCompleted && styles.completedQuizCard]}>
         <View style={styles.quizContent}>
@@ -273,7 +304,7 @@ export default function QuizzesScreen({ navigation }) {
                 {quiz.category}
               </Text>
               <Text style={[
-                styles.quizDifficulty, 
+                styles.quizDifficulty,
                 { color: isCompleted ? '#666' : getDifficultyColor(quiz.difficulty) }
               ]}>
                 {quiz.difficulty}
@@ -284,9 +315,10 @@ export default function QuizzesScreen({ navigation }) {
             </View>
             <Text style={[
               styles.quizStatus,
-              isCompleted ? styles.completedStatus : styles.availableStatus
+              isPerfect ? styles.completedStatus :
+              isCompleted ? styles.doneStatus : styles.availableStatus
             ]}>
-              {isCompleted ? 'Completed ✓' : 'Available'}
+              {isPerfect ? 'Perfect ✓' : isCompleted ? 'Completed' : 'Available'}
             </Text>
           </View>
           {!isCompleted ? (
@@ -297,8 +329,10 @@ export default function QuizzesScreen({ navigation }) {
               <Text style={styles.playButtonText}>PLAY</Text>
             </TouchableOpacity>
           ) : (
-            <View style={styles.completedBadge}>
-              <Text style={styles.completedBadgeText}>DONE</Text>
+            <View style={isPerfect ? styles.completedBadge : styles.doneBadge}>
+              <Text style={isPerfect ? styles.completedBadgeText : styles.doneBadgeText}>
+                {isPerfect ? 'PERFECT' : 'DONE'}
+              </Text>
             </View>
           )}
         </View>
@@ -306,6 +340,7 @@ export default function QuizzesScreen({ navigation }) {
     );
   };
 
+  // --- UI for coins, achievements ---
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -317,6 +352,9 @@ export default function QuizzesScreen({ navigation }) {
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Quizzes & Achievements</Text>
+        <View style={styles.coinBox}>
+          <Text style={styles.coinText}>🪙 {coins}</Text>
+        </View>
       </View>
 
       {/* Tab Navigation */}
@@ -361,14 +399,26 @@ export default function QuizzesScreen({ navigation }) {
             </View>
             <View style={styles.progressContainer}>
               <Text style={styles.progressText}>
-                Progress: {completedQuizzes.length}/{quizzes.length} completed
+                Progress: {perfectQuizzes.length}/{quizzes.length} perfect
               </Text>
             </View>
             {quizzes.map(renderQuizCard)}
           </>
         ) : (
           <View style={styles.achievementsContainer}>
-            <Text style={styles.achievementsText}>Achievements coming soon...</Text>
+            <Text style={styles.sectionTitle}>Achievements</Text>
+            {getAchievements().map((ach, idx) => (
+              <View
+                key={idx}
+                style={[
+                  styles.achievementBox,
+                  ach.done ? styles.achDone : styles.achNotDone,
+                ]}
+              >
+                <Text style={styles.achName}>{ach.name} {ach.done ? '🏆' : ''}</Text>
+                <Text style={styles.achDesc}>{ach.desc}</Text>
+              </View>
+            ))}
           </View>
         )}
       </ScrollView>
@@ -376,193 +426,59 @@ export default function QuizzesScreen({ navigation }) {
   );
 }
 
+// --- Add these to your existing styles:
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 16,
-  },
-  backButton: {
-    marginRight: 16,
-  },
-  backArrow: {
-    fontSize: 24,
-    color: '#fff',
-    fontWeight: 'bold',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  tabContainer: {
-    flexDirection: 'row',
-    marginHorizontal: 16,
-    marginBottom: 24,
-    backgroundColor: '#333',
-    borderRadius: 25,
-    padding: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  activeTab: {
-    backgroundColor: '#555',
-  },
-  inactiveTab: {
-    backgroundColor: 'transparent',
-  },
-  tabText: {
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  inactiveTabText: {
-    color: '#999',
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#fff',
-    letterSpacing: 1,
-  },
-  quizCount: {
-    fontSize: 16,
-    color: '#999',
-    marginLeft: 8,
-  },
-  progressContainer: {
-    backgroundColor: '#333',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 20,
-  },
-  progressText: {
-    color: '#fff',
-    fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-  quizCard: {
-    backgroundColor: '#222',
-    borderRadius: 12,
-    marginBottom: 16,
-    overflow: 'hidden',
-  },
-  completedQuizCard: {
-    backgroundColor: '#1a1a1a',
-    opacity: 0.8,
-  },
-  quizContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-  },
-  quizInfo: {
-    flex: 1,
-    marginRight: 12,
-  },
-  quizTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#fff',
-    marginBottom: 4,
-    lineHeight: 22,
-  },
-  completedTitle: {
-    color: '#aaa',
-  },
-  quizDescription: {
-    fontSize: 13,
-    color: '#bbb',
-    marginBottom: 6,
-    lineHeight: 18,
-  },
-  completedDescription: {
-    color: '#777',
-  },
-  quizMeta: {
-    flexDirection: 'row',
-    marginBottom: 4,
-    flexWrap: 'wrap',
-  },
-  quizCategory: {
-    fontSize: 12,
-    color: '#888',
-    marginRight: 12,
-    fontWeight: '500',
-  },
-  completedText: {
-    color: '#666',
-  },
-  quizDifficulty: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    marginRight: 12,
-  },
-  questionCount: {
-    fontSize: 12,
-    color: '#888',
-    fontWeight: '500',
-  },
-  quizStatus: {
-    fontSize: 14,
-  },
-  completedStatus: {
-    color: '#4CAF50',
-  },
-  availableStatus: {
-    color: '#999',
-  },
-  playButton: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 20,
-  },
-  playButtonText: {
-    fontSize: 14,
-    fontWeight: 'bold',
-    color: '#000',
-  },
-  completedBadge: {
-    backgroundColor: '#4CAF50',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 16,
-  },
-  completedBadgeText: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  achievementsContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 100,
-  },
-  achievementsText: {
-    fontSize: 18,
-    color: '#999',
-  },
+  // ... everything from before ...
+  container: { flex: 1, backgroundColor: '#000' },
+  header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, },
+  backButton: { marginRight: 16, },
+  backArrow: { fontSize: 24, color: '#fff', fontWeight: 'bold', },
+  headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', flex: 1 },
+  coinBox: { backgroundColor: '#222', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4, marginLeft: 12 },
+  coinText: { color: '#FFD700', fontWeight: 'bold', fontSize: 18 },
+  // ... all your old styles here ...
+  tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 24, backgroundColor: '#333', borderRadius: 25, padding: 4, },
+  tab: { flex: 1, paddingVertical: 12, borderRadius: 20, alignItems: 'center', },
+  activeTab: { backgroundColor: '#555', },
+  inactiveTab: { backgroundColor: 'transparent', },
+  tabText: { fontSize: 16, fontWeight: '500', },
+  activeTabText: { color: '#fff', },
+  inactiveTabText: { color: '#999', },
+  content: { flex: 1, paddingHorizontal: 16, },
+  sectionHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, },
+  sectionTitle: { fontSize: 16, fontWeight: 'bold', color: '#fff', letterSpacing: 1, },
+  quizCount: { fontSize: 16, color: '#999', marginLeft: 8, },
+  progressContainer: { backgroundColor: '#333', padding: 12, borderRadius: 8, marginBottom: 20, },
+  progressText: { color: '#fff', fontSize: 14, textAlign: 'center', fontWeight: '500', },
+  quizCard: { backgroundColor: '#222', borderRadius: 12, marginBottom: 16, overflow: 'hidden', },
+  completedQuizCard: { backgroundColor: '#1a1a1a', opacity: 0.8, },
+  quizContent: { flexDirection: 'row', alignItems: 'center', padding: 16, },
+  quizInfo: { flex: 1, marginRight: 12, },
+  quizTitle: { fontSize: 16, fontWeight: '600', color: '#fff', marginBottom: 4, lineHeight: 22, },
+  completedTitle: { color: '#aaa', },
+  quizDescription: { fontSize: 13, color: '#bbb', marginBottom: 6, lineHeight: 18, },
+  completedDescription: { color: '#777', },
+  quizMeta: { flexDirection: 'row', marginBottom: 4, flexWrap: 'wrap', },
+  quizCategory: { fontSize: 12, color: '#888', marginRight: 12, fontWeight: '500', },
+  completedText: { color: '#666', },
+  quizDifficulty: { fontSize: 12, fontWeight: 'bold', marginRight: 12, },
+  questionCount: { fontSize: 12, color: '#888', fontWeight: '500', },
+  quizStatus: { fontSize: 14, },
+  completedStatus: { color: '#4CAF50', },
+  doneStatus: { color: '#999', },
+  availableStatus: { color: '#999', },
+  playButton: { backgroundColor: '#fff', paddingHorizontal: 20, paddingVertical: 10, borderRadius: 20, },
+  playButtonText: { fontSize: 14, fontWeight: 'bold', color: '#000', },
+  completedBadge: { backgroundColor: '#4CAF50', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, },
+  completedBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#fff', },
+  doneBadge: { backgroundColor: '#999', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 16, },
+  doneBadgeText: { fontSize: 12, fontWeight: 'bold', color: '#fff', },
+  achievementsContainer: { flex: 1, alignItems: 'center', paddingTop: 30 },
+  achievementBox: { width: '95%', backgroundColor: '#222', borderRadius: 14, marginBottom: 16, padding: 16, alignSelf: 'center', },
+  achDone: { borderColor: '#4CAF50', borderWidth: 2 },
+  achNotDone: { borderColor: '#666', borderWidth: 1 },
+  achName: { color: '#FFD700', fontWeight: 'bold', fontSize: 17, marginBottom: 6 },
+  achDesc: { color: '#ccc', fontSize: 15 },
+  achievementsText: { fontSize: 18, color: '#999', marginVertical: 15 },
 });
+

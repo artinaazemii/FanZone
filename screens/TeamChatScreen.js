@@ -27,6 +27,9 @@ import {
   doc,
   getDoc,
   setDoc,
+  updateDoc,
+  getDocs,
+  limit,
 } from "firebase/firestore";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -40,8 +43,9 @@ export default function TeamChatScreen({ route }) {
   const [members, setMembers] = useState([]);
   const [showMembers, setShowMembers] = useState(false);
   const [adminId, setAdminId] = useState(null);
+  const [isMemberEnsured, setIsMemberEnsured] = useState(false);
 
-  // Fetch adminId
+  // 1) Marrim adminId aktual nga "teamChats/{teamId}"
   useEffect(() => {
     const chatRef = doc(db, "teamChats", teamId);
     getDoc(chatRef)
@@ -51,44 +55,98 @@ export default function TeamChatScreen({ route }) {
       .catch(e => console.error("Error fetching adminId:", e));
   }, [teamId]);
 
-  // Ensure current user is a member
+  // 2) Sigurojmë hyrjen e përdoruesit (members/{uid}) para se të hapim listener-at
   useEffect(() => {
-    const memberRef = doc(db, "teamChats", teamId, "members", auth.currentUser.uid);
-    getDoc(memberRef)
-      .then(snap => {
+    let isCancelled = false;
+
+    async function ensureMember() {
+      try {
+        const memberRef = doc(db, "teamChats", teamId, "members", auth.currentUser.uid);
+        const snap = await getDoc(memberRef);
+
         if (!snap.exists()) {
-          setDoc(memberRef, {
+          await setDoc(memberRef, {
             displayName: auth.currentUser.displayName || "User",
             joinedAt: serverTimestamp(),
           });
         }
-      })
-      .catch(e => console.error("Error ensuring memberDoc:", e));
+        if (!isCancelled) {
+          setIsMemberEnsured(true);
+        }
+      } catch (e) {
+        console.error("Error ensuring memberDoc:", e);
+      }
+    }
+
+    ensureMember();
+    return () => {
+      isCancelled = true;
+    };
   }, [teamId]);
 
-  // Listen to messages
+  // 3) Pasi "isMemberEnsured" === true, hapim listener për mesazhe
   useEffect(() => {
+    if (!isMemberEnsured) return;
+
     const q = query(
       collection(db, "teamChats", teamId, "messages"),
       orderBy("createdAt", "asc")
     );
-    return onSnapshot(
+    const unsubscribeMessages = onSnapshot(
       q,
       snap => setMessages(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
       e => console.error("Message snapshot error:", e)
     );
-  }, [teamId]);
 
-  // Listen to members
+    return () => unsubscribeMessages();
+  }, [teamId, isMemberEnsured]);
+
+  // 4) Pasi "isMemberEnsured" === true, hapim listener për anëtarët
   useEffect(() => {
-    return onSnapshot(
+    if (!isMemberEnsured) return;
+
+    const unsubscribeMembers = onSnapshot(
       collection(db, "teamChats", teamId, "members"),
-      snap => setMembers(snap.docs.map(d => ({ id: d.id, ...d.data() }))),
+      snap => {
+        const docs = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        setMembers(docs);
+      },
       e => console.error("Members snapshot error:", e)
     );
-  }, [teamId]);
+    return () => unsubscribeMembers();
+  }, [teamId, isMemberEnsured]);
 
-  // Header button
+  // 5) Nëse admin-i aktual nuk është më në "members", caktojmë admin të ri: anëtari me 'joinedAt' më të vogël
+  useEffect(() => {
+    if (!isMemberEnsured || adminId === null) return;
+
+    // Kontrollojmë nëse admin-i aktual është ende në listë
+    const stillAdmin = members.some(member => member.id === adminId);
+
+    if (!stillAdmin && members.length > 0) {
+      // Përdorim një query për të marrë anëtarin me 'joinedAt' më të vogël (limit 1 në renditje rritëse)
+      const earliestQuery = query(
+        collection(db, "teamChats", teamId, "members"),
+        orderBy("joinedAt", "asc"),
+        limit(1)
+      );
+      getDocs(earliestQuery)
+        .then(qSnap => {
+          if (!qSnap.empty) {
+            const newAdminId = qSnap.docs[0].id;
+            const chatRef = doc(db, "teamChats", teamId);
+            updateDoc(chatRef, { adminId: newAdminId })
+              .then(() => {
+                setAdminId(newAdminId);
+              })
+              .catch(err => console.error("Error updating new admin:", err));
+          }
+        })
+        .catch(err => console.error("Error fetching earliest member:", err));
+    }
+  }, [members, adminId, isMemberEnsured, teamId]);
+
+  // 6) Konfigurojmë header-in me butonin për modal "Members"
   useLayoutEffect(() => {
     navigation.setOptions({
       title: `${teamName} Chat`,
@@ -98,8 +156,9 @@ export default function TeamChatScreen({ route }) {
         </TouchableOpacity>
       ),
     });
-  }, [navigation, members]);
+  }, [navigation, members, teamName]);
 
+  // 7) Funksioni për të dërguar mesazh
   const sendMessage = async () => {
     if (!input.trim()) return;
     try {
@@ -117,6 +176,7 @@ export default function TeamChatScreen({ route }) {
     }
   };
 
+  // 8) Funksioni për të fshirë mesazh (vetëm i vetë përdoruesit)
   const confirmDelete = msgId =>
     Alert.alert("Delete message?", "This cannot be undone.", [
       { text: "Cancel", style: "cancel" },
@@ -134,6 +194,7 @@ export default function TeamChatScreen({ route }) {
       },
     ]);
 
+  // 9) Renderojmë mesazhet në FlatList
   const renderMessage = ({ item }) => {
     const isMe = item.userId === auth.currentUser.uid;
     return (
@@ -185,7 +246,7 @@ export default function TeamChatScreen({ route }) {
       </KeyboardAvoidingView>
 
       <Modal visible={showMembers} animationType="slide" onRequestClose={() => setShowMembers(false)}>
-        <SafeAreaView style={[styles.modal, { paddingTop: insets.top }]}>        
+        <SafeAreaView style={[styles.modal, { paddingTop: insets.top }]}>
           <Text style={styles.modalTitle}>{teamName} Members ({members.length})</Text>
           <FlatList
             data={members}
@@ -206,14 +267,17 @@ export default function TeamChatScreen({ route }) {
                   </Text>
 
                   {amIAdmin && isNotMe && (
-                    <TouchableOpacity onPress={async () => {
-                      try {
-                        await deleteDoc(doc(db, "teamChats", teamId, "members", item.id));
-                      } catch (e) {
-                        console.error("Kick failed:", e);
-                        Alert.alert("Kick failed", e.message);
-                      }
-                    }} style={styles.kickBtn}>
+                    <TouchableOpacity
+                      onPress={async () => {
+                        try {
+                          await deleteDoc(doc(db, "teamChats", teamId, "members", item.id));
+                        } catch (e) {
+                          console.error("Kick failed:", e);
+                          Alert.alert("Kick failed", e.message);
+                        }
+                      }}
+                      style={styles.kickBtn}
+                    >
                       <Text style={styles.kickTxt}>Kick</Text>
                     </TouchableOpacity>
                   )}

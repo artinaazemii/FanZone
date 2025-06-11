@@ -11,10 +11,15 @@ import {
 } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { auth, db } from "../firebaseConfig";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 import Logo from "./Logo";
 
-// Ensure the chat document exists (with adminId if new)
+// Siguron që dokumenti i bisedës ekziston (me adminId nëse është i ri)
 const ensureChatDoc = async (team) => {
   const chatRef = doc(db, "teamChats", team.id);
   const snap = await getDoc(chatRef);
@@ -26,6 +31,20 @@ const ensureChatDoc = async (team) => {
       createdAt: serverTimestamp(),
     });
   }
+};
+
+// Siguron që përdoruesi është anëtar; nëse nuk është, e krijon dokumentin “members/{uid}”.
+const ensureMemberDoc = async (teamId) => {
+  const memberRef = doc(db, "teamChats", teamId, "members", auth.currentUser.uid);
+  const memSnap = await getDoc(memberRef);
+  if (!memSnap.exists()) {
+    await setDoc(memberRef, {
+      displayName: auth.currentUser.displayName || "User",
+      joinedAt: serverTimestamp(),
+    });
+    return true;
+  }
+  return false;
 };
 
 export default function ChatListScreen() {
@@ -46,10 +65,9 @@ export default function ChatListScreen() {
           all.reduce((acc, t) => ({ ...acc, [t.id]: t }), {})
         );
 
-        // Ensure chat docs exist
+        // Siguron që “teamChats” dok. ekzistojnë për çdo team
         await Promise.all(unique.map(ensureChatDoc));
 
-        // Show all chats; membership gating on tap
         setChatTeams(unique);
       } finally {
         setLoading(false);
@@ -61,23 +79,28 @@ export default function ChatListScreen() {
 
   const handlePress = async (team) => {
     try {
-      const memSnap = await getDoc(
-        doc(db, "teamChats", team.id, "members", auth.currentUser.uid)
-      );
+      // 1) Kontrollon nëse ekziston dokumenti i anëtarit
+      const memRef = doc(db, "teamChats", team.id, "members", auth.currentUser.uid);
+      const memSnap = await getDoc(memRef);
+
+      // 2) Nëse nuk ekziston, e krijon – pra përdoruesi i ri automatikisht bëhet anëtar
       if (!memSnap.exists()) {
-        Alert.alert(
-          "Access denied",
-          "You have been removed from this chat by the admin."
-        );
+        await ensureMemberDoc(team.id);
+        navigation.navigate("TeamChat", {
+          teamId: team.id,
+          teamName: team.name,
+        });
         return;
       }
+
+      // 3) Nëse ekziston, vazhdon normalisht
       navigation.navigate("TeamChat", {
         teamId: team.id,
         teamName: team.name,
       });
     } catch (e) {
-      console.error("Error checking membership:", e);
-      Alert.alert("Error", "Could not verify access. Please try again.");
+      console.error("Error in handlePress:", e);
+      Alert.alert("Error", "Could not verify access or join chat. Please try again.");
     }
   };
 

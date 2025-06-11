@@ -1,4 +1,5 @@
 // navigation/Navigation.js
+
 import React from 'react';
 import {
   View,
@@ -11,7 +12,6 @@ import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
-/* screens */
 import HomeScreen            from '../screens/HomeScreen';
 import ScoreBoardScreen      from '../screens/ScoreBoardScreen';
 import ProfileScreen         from '../screens/ProfileScreen';
@@ -27,21 +27,20 @@ import QuizzesScreen         from '../screens/QuizzesScreen';
 import QuizGameScreen        from '../screens/QuizGameScreen';
 import ProfileIcon           from '../screens/ProfileIcon';
 
-/* NEW ──────────────────────────────────────────────────── */
 import { useCoins } from '../context/CoinContext';
 
-/* assets */
+// assets
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 const logo  = require('../assets/logo.png');
-const coin  = require('../assets/coin.png');               // NEW
+const coin  = require('../assets/coin.png');
 
-/* ─────────────────────────  HEADER HELPERS  ───────────────────────── */
+// ─────── HEADER HELPERS ───────
 function CustomHeader() {
   return <Image source={logo} style={styles.logo} />;
 }
 
-/* NEW – live coin badge shown everywhere  */
+// Coin badge: live everywhere
 function CoinBadge() {
   const { coins } = useCoins();
   return (
@@ -54,7 +53,7 @@ function CoinBadge() {
   );
 }
 
-/* NEW – convenience wrapper so we don’t repeat the same headerRight */
+// Convenience: always coin badge + profile top right
 const HeaderRight = () => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
     <CoinBadge />
@@ -63,7 +62,7 @@ const HeaderRight = () => (
   </View>
 );
 
-/* ─────────────────────────  TABS  ───────────────────────── */
+// ─────── TABS ───────
 function Tabs() {
   return (
     <Tab.Navigator
@@ -83,10 +82,9 @@ function Tabs() {
         },
         tabBarActiveTintColor: 'black',
         tabBarInactiveTintColor: 'gray',
-
         headerTitle: () => <CustomHeader />,
         headerTitleAlign: 'center',
-        headerRight: HeaderRight,            // NEW – coin badge + profile
+        headerRight: HeaderRight, // Coin badge + profile
       })}
     >
       <Tab.Screen name="Home"        component={HomeScreen} />
@@ -97,11 +95,10 @@ function Tabs() {
   );
 }
 
-/* ─────────────────────────  STACK  ───────────────────────── */
+// ─────── STACK ───────
 export default function Navigation() {
   return (
     <Stack.Navigator
-      /* NEW – default header with coin badge */
       screenOptions={{ headerRight: HeaderRight }}
     >
       <Stack.Screen
@@ -250,7 +247,6 @@ export default function Navigation() {
   );
 }
 
-/* ─────────────────────────  STYLES  ───────────────────────── */
 const styles = StyleSheet.create({
   logo: { width: 100, height: 70, resizeMode: 'contain' },
 });

@@ -7,13 +7,13 @@ import {
   SafeAreaView,
   Alert,
 } from 'react-native';
-import { useCoins } from '../context/CoinContext';         // ⬅️ NEW
+import { useCoins } from '../context/CoinContext';
 
-const REWARD_COINS = 25;                                   // ⬅️ how many coins for a perfect score
+const REWARD_COINS = 25;
 
 export default function QuizGameScreen({ route, navigation }) {
-  const { quiz, onComplete } = route.params;
-  const { addCoins } = useCoins();                         // ⬅️ NEW
+  const { quiz, onComplete, alreadyPerfect } = route.params;
+  const { addCoins } = useCoins();
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
@@ -50,7 +50,6 @@ export default function QuizGameScreen({ route, navigation }) {
 
     if (isLastQuestion) {
       setShowResult(true);
-      if (onComplete) onComplete();
     } else {
       setCurrentQuestionIndex((idx) => idx + 1);
       setSelectedAnswer(null);
@@ -58,15 +57,15 @@ export default function QuizGameScreen({ route, navigation }) {
   };
 
   const handleFinishQuiz = async () => {
-    // ─── Reward coins for perfect score ────────────────────────────────
-    if (score === quiz.questions.length) {
+    const isPerfect = score === quiz.questions.length;
+    if (isPerfect && !alreadyPerfect) {
       await addCoins(REWARD_COINS);
       Alert.alert('🏅 Perfect!', `You earned ${REWARD_COINS} coins.`);
     }
+    if (onComplete) onComplete({ isPerfect });
     navigation.goBack();
   };
 
-  /* helper UI functions */
   const getScoreColor = () => {
     const pct = (score / quiz.questions.length) * 100;
     if (pct >= 80) return '#4CAF50';
@@ -80,8 +79,6 @@ export default function QuizGameScreen({ route, navigation }) {
     return 'Keep practicing! 💪';
   };
 
-  // ─────────────────────────────────────────────────────────────────────
-  //  RESULT VIEW
   if (showResult) {
     return (
       <SafeAreaView style={styles.container}>
@@ -135,11 +132,9 @@ export default function QuizGameScreen({ route, navigation }) {
     );
   }
 
-  // ─────────────────────────────────────────────────────────────────────
-  //  QUIZ VIEW
+  // QUIZ VIEW
   return (
     <SafeAreaView style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backArrow}>←</Text>
@@ -147,7 +142,6 @@ export default function QuizGameScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>{quiz.title}</Text>
       </View>
 
-      {/* Progress */}
       <View style={styles.progressContainer}>
         <Text style={styles.progressText}>
           Question {currentQuestionIndex + 1} of {quiz.questions.length}
@@ -162,12 +156,10 @@ export default function QuizGameScreen({ route, navigation }) {
         </View>
       </View>
 
-      {/* Question */}
       <View style={styles.questionContainer}>
         <Text style={styles.questionText}>{currentQuestion.question}</Text>
       </View>
 
-      {/* Options */}
       <View style={styles.optionsContainer}>
         {currentQuestion.options.map((option, index) => (
           <TouchableOpacity
@@ -190,7 +182,6 @@ export default function QuizGameScreen({ route, navigation }) {
         ))}
       </View>
 
-      {/* Next / Finish */}
       <View style={styles.bottomContainer}>
         <TouchableOpacity
           style={[
@@ -214,7 +205,6 @@ export default function QuizGameScreen({ route, navigation }) {
   );
 }
 
-/*  ======  STYLES  (unchanged)  ======  */
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#000' },
   header: { flexDirection: 'row', alignItems: 'center', padding: 16 },
@@ -244,7 +234,6 @@ const styles = StyleSheet.create({
   disabledButton: { backgroundColor: '#333' },
   nextButtonText: { color: '#fff', fontSize: 18, fontWeight: 'bold' },
   disabledButtonText: { color: '#666' },
-  /* result */
   resultContainer: { flex: 1, padding: 16 },
   resultTitle: { fontSize: 28, fontWeight: 'bold', color: '#fff', textAlign: 'center' },
   quizTitle: { fontSize: 18, color: '#bbb', textAlign: 'center', marginBottom: 32 },

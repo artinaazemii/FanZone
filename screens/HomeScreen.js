@@ -79,8 +79,8 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('MatchingPairs')}
         >
           <Image
-            source={require('../assets/MatchingPairs.png')}
-            style={styles.gameIcon}
+            source={require('../assets/MatchingPairsss.png')}
+            style={styles.matchingPairsIcon}
             resizeMode="contain"
           />
           <Text style={styles.gameText}>Matching Pairs</Text>
@@ -91,9 +91,9 @@ export default function HomeScreen({ navigation }) {
           onPress={() => navigation.navigate('Quizzes')}
         >
           <Image
-            source={require('../assets/Quizzes.png')}
-            style={styles.gameIcon}
-            resizeMode="contain"
+            source={require('../assets/Quizzess.png')}
+            style={styles.quizzesIcon}
+            resizeMode="cover"
           />
           <Text style={styles.gameText}>Quizzes</Text>
         </TouchableOpacity>
@@ -192,9 +192,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3.84,
   },
-  gameIcon: {
-    width: 80,
-    height: 80,
+  matchingPairsIcon: {
+    width: 90,
+    height: 90,
+    marginBottom: 12,
+  },
+  quizzesIcon: {
+    width: 100,
+    height: 100,
     marginBottom: 12,
   },
   gameText: {

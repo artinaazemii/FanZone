@@ -1,4 +1,4 @@
-// context/CoinContext.js
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
@@ -6,10 +6,9 @@ import { auth, db } from '../firebaseConfig';
 const CoinContext = createContext();
 
 export const CoinProvider = ({ children }) => {
-  const [coins, setCoins] = useState(null);          // null while loading
+  const [coins, setCoins] = useState(null);       
   const uid = auth.currentUser?.uid;
 
-  // ───────────────────────────────── load balance
   useEffect(() => {
     if (!uid) return;
 
@@ -28,7 +27,6 @@ export const CoinProvider = ({ children }) => {
     load();
   }, [uid]);
 
-  // ───────────────────────────────── helpers
   const addCoins = async (amount) => {
     if (!uid) return;
     setCoins((prev) => prev + amount);

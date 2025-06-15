@@ -3,17 +3,19 @@
     "name": "FanZoneApp",
     "slug": "FanZoneApp",
     "version": "1.0.0",
+    "sdkVersion": "53.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "plugins": [
+      "expo-updates"
+    ],
     "newArchEnabled": true,
-
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
-
     "ios": {
       "bundleIdentifier": "com.FanZoneApp.myapp",
       "supportsTablet": true,
@@ -21,18 +23,31 @@
         "NSPhotoLibraryUsageDescription": "Allow FanZone to access your photos so you can send images in chat."
       }
     },
-
     "android": {
       "package": "com.FanZoneApp.myapp",
-      "permissions": ["READ_MEDIA_IMAGES"],            
+      "permissions": [
+        "READ_MEDIA_IMAGES",
+        "READ_MEDIA_IMAGES"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       }
     },
-
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "eas": {
+        "projectId": "3032a4bf-72b2-4f55-9125-4b982bd5a86f"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3032a4bf-72b2-4f55-9125-4b982bd5a86f",
+      "fallbackToCacheTimeout": 0
     }
   }
 }

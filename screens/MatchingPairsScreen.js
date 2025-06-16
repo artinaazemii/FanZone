@@ -1,3 +1,4 @@
+"use client"
 import { useState, useEffect, useRef } from "react"
 import {
   View,
@@ -12,10 +13,13 @@ import {
   Easing,
   ScrollView,
   ImageBackground,
+  Alert,
 } from "react-native"
 import { useNavigation } from "@react-navigation/native"
+import { useCoins } from "../context/CoinContext"
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
-const { width, height } = Dimensions.get("window")
+const { width } = Dimensions.get("window")
 
 // Best European teams data with badge images
 const europeanTeams = [
@@ -91,57 +95,35 @@ const europeanTeams = [
     color: "#CE3524",
     league: "La Liga",
   },
-  {
-    name: "Borussia Dortmund",
-    badge: "https://logos-world.net/wp-content/uploads/2020/11/Borussia-Dortmund-Logo.png",
-    color: "#FDE100",
-    league: "Bundesliga",
-  },
-  {
-    name: "Manchester United",
-    badge: "https://logos-world.net/wp-content/uploads/2020/06/Manchester-United-logo.png",
-    color: "#087FD1",
-    league: "Premier League",
-  },
-  {
-    name: "Tottenham",
-    badge: "https://logos-world.net/wp-content/uploads/2020/06/Tottenham-Hotspur-Logo.png",
-    color: "#132257",
-    league: "Premier League",
-  },
-  {
-    name: "Ajax",
-    badge: "https://logos-world.net/wp-content/uploads/2020/06/Ajax-Logo.png",
-    color: "#D2122E",
-    league: "Eredivisie",
-  },
 ]
+
+const COOLDOWN_HOURS = 12
+const COOLDOWN_KEY = "matching_pairs_cooldown"
+
 export default function MatchingPairsScreen() {
   const navigation = useNavigation()
   const [currentScreen, setCurrentScreen] = useState("menu")
+  const [gameMode, setGameMode] = useState("fun")
   const [showGuide, setShowGuide] = useState(false)
   const [cards, setCards] = useState([])
   const [flippedCards, setFlippedCards] = useState([])
   const [matchedCards, setMatchedCards] = useState([])
   const [score, setScore] = useState(0)
+  const { coins, addCoins, spendCoins } = useCoins()
   const [timer, setTimer] = useState(50)
   const [gameActive, setGameActive] = useState(false)
   const [gameStarted, setGameStarted] = useState(false)
   const [cardFlipAnimations, setCardFlipAnimations] = useState({})
+  const [cooldownEndTime, setCooldownEndTime] = useState(null)
 
-  // Animation values
+  // Entrance animations
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(50)).current
   const scaleAnim = useRef(new Animated.Value(0.8)).current
 
   useEffect(() => {
-    // Entrance animation
     Animated.parallel([
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
+      Animated.timing(fadeAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
       Animated.timing(slideAnim, {
         toValue: 0,
         duration: 800,
@@ -155,116 +137,177 @@ export default function MatchingPairsScreen() {
         useNativeDriver: true,
       }),
     ]).start()
+
+    checkCooldown()
   }, [])
 
-  // Initialize game
-  const initializeGame = () => {
-    const gameCards = []
-    const selectedTeams = europeanTeams.slice(0, 12)
+  // Check cooldown on component mount
+  const checkCooldown = async () => {
+    try {
+      const cooldownData = await AsyncStorage.getItem(COOLDOWN_KEY)
+      if (cooldownData) {
+        const endTime = Number.parseInt(cooldownData)
+        if (Date.now() < endTime) {
+          setCooldownEndTime(endTime)
+        } else {
+          await AsyncStorage.removeItem(COOLDOWN_KEY)
+        }
+      }
+    } catch (error) {
+      console.error("Error checking cooldown:", error)
+    }
+  }
 
-    selectedTeams.forEach((team, index) => {
+  // Set cooldown after playing coin mode
+  const setCooldown = async () => {
+    try {
+      const endTime = Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000
+      await AsyncStorage.setItem(COOLDOWN_KEY, endTime.toString())
+      setCooldownEndTime(endTime)
+    } catch (error) {
+      console.error("Error setting cooldown:", error)
+    }
+  }
+
+  // Check if user can play coin mode
+  const canPlayCoinMode = () => {
+    return coins >= 10 && (!cooldownEndTime || Date.now() >= cooldownEndTime)
+  }
+
+  // Get remaining cooldown time
+  const getRemainingCooldownTime = () => {
+    if (!cooldownEndTime) return null
+    const remaining = cooldownEndTime - Date.now()
+    if (remaining <= 0) return null
+
+    const hours = Math.floor(remaining / (1000 * 60 * 60))
+    const minutes = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60))
+    return `${hours}h ${minutes}m`
+  }
+
+  // Initialize game
+  const initializeGame = async (selectedMode) => {
+    const gameCards = []
+    europeanTeams.slice(0, 12).forEach((team, index) => {
       gameCards.push({ id: index * 2, team, flipped: false, matched: false })
       gameCards.push({ id: index * 2 + 1, team, flipped: false, matched: false })
     })
+    const shuffled = gameCards.sort(() => Math.random() - 0.5)
 
-    const shuffledCards = gameCards.sort(() => Math.random() - 0.5)
-    setCards(shuffledCards)
+    setCards(shuffled)
     setFlippedCards([])
     setMatchedCards([])
     setScore(0)
-    setTimer(50)
+    setTimer(90)
+    setGameMode(selectedMode)
     setGameActive(true)
     setGameStarted(true)
 
-    // Initialize flip animations for all cards
+    // Spend coins and set cooldown for coin mode
+    if (selectedMode === "coins") {
+      await spendCoins(10)
+      await setCooldown()
+    }
+
+    // Initialize flip animations
     const animations = {}
-    shuffledCards.forEach((card) => {
-      animations[card.id] = new Animated.Value(0)
-    })
+    shuffled.forEach((c) => (animations[c.id] = new Animated.Value(0)))
     setCardFlipAnimations(animations)
   }
 
-  // Timer effect
+  // Timer
   useEffect(() => {
     let interval
     if (gameActive && timer > 0) {
-      interval = setInterval(() => {
-        setTimer((prev) => prev - 1)
-      }, 1000)
+      interval = setInterval(() => setTimer((prev) => prev - 1), 1000)
     } else if (timer === 0 && gameStarted) {
       setGameActive(false)
     }
     return () => clearInterval(interval)
   }, [gameActive, timer, gameStarted])
 
-  // Handle card flip
+  // Handle flips & matches
   const handleCardFlip = (cardId) => {
     if (!gameActive || flippedCards.length >= 2) return
-
     const card = cards.find((c) => c.id === cardId)
     if (card.flipped || card.matched) return
 
-    // Start flip animation
-    const flipAnimation = cardFlipAnimations[cardId]
-    if (!flipAnimation) return
+    const flipAnim = cardFlipAnimations[cardId]
+    Animated.timing(flipAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start()
 
-    Animated.timing(flipAnimation, {
-      toValue: 1,
-      duration: 600,
-      useNativeDriver: true,
-    }).start()
+    const newFlipped = [...flippedCards, cardId]
+    setFlippedCards(newFlipped)
 
-    const newFlippedCards = [...flippedCards, cardId]
-    setFlippedCards(newFlippedCards)
+    if (newFlipped.length === 2) {
+      const [firstId, secondId] = newFlipped
+      const first = cards.find((c) => c.id === firstId)
+      const second = cards.find((c) => c.id === secondId)
 
-    if (newFlippedCards.length === 2) {
-      const [firstId, secondId] = newFlippedCards
-      const firstCard = cards.find((c) => c.id === firstId)
-      const secondCard = cards.find((c) => c.id === secondId)
-
-      if (firstCard.team.name === secondCard.team.name) {
-        // Match found - keep cards flipped
+      if (first.team.name === second.team.name) {
         setTimeout(() => {
-          setMatchedCards((prev) => [...prev, firstId, secondId])
+          setMatchedCards((prev) => {
+            const updated = [...prev, firstId, secondId]
+            if (updated.length === europeanTeams.slice(0, 12).length * 2) {
+              setGameActive(false)
+            }
+            return updated
+          })
           setScore((prev) => prev + 10)
           setFlippedCards([])
         }, 600)
       } else {
-        // No match - flip cards back
         setTimeout(() => {
-          // Animate cards back to original position
-          Animated.timing(cardFlipAnimations[firstId], {
-            toValue: 0,
-            duration: 600,
-            useNativeDriver: true,
-          }).start()
-
-          Animated.timing(cardFlipAnimations[secondId], {
-            toValue: 0,
-            duration: 600,
-            useNativeDriver: true,
-          }).start()
-
+          Animated.timing(cardFlipAnimations[firstId], { toValue: 0, duration: 600, useNativeDriver: true }).start()
+          Animated.timing(cardFlipAnimations[secondId], { toValue: 0, duration: 600, useNativeDriver: true }).start()
           setFlippedCards([])
         }, 1000)
       }
     }
   }
 
-  const startGame = () => {
+  // Award 20 coins on completion in coin mode
+  useEffect(() => {
+    if (
+      !gameActive &&
+      gameStarted &&
+      matchedCards.length === europeanTeams.slice(0, 12).length * 2 &&
+      gameMode === "coins"
+    ) {
+      addCoins(20)
+    }
+  }, [gameActive, gameStarted, matchedCards.length, gameMode])
+
+  const startGame = (mode) => {
+    if (mode === "coins" && !canPlayCoinMode()) {
+      if (coins < 10) {
+        Alert.alert("Not Enough Coins", "You need 10 coins to play this mode.", [{ text: "OK" }])
+      } else {
+        Alert.alert("Cooldown Active", `You can play coin mode again in ${getRemainingCooldownTime()}`, [
+          { text: "OK" },
+        ])
+      }
+      return
+    }
+
     setCurrentScreen("game")
-    initializeGame()
+    initializeGame(mode)
   }
 
   const goBack = () => {
-    if (currentScreen === "menu") {
-      navigation.goBack()
-    } else {
-      setCurrentScreen("menu")
+    if (currentScreen === "menu") navigation.goBack()
+    else if (currentScreen === "game") {
+      setCurrentScreen("mode-select")
       setGameActive(false)
       setGameStarted(false)
-    }
+    } else setCurrentScreen("menu")
   }
+
+  if (coins === null)
+    return (
+      <View style={[styles.container, { justifyContent: "center", alignItems: "center", backgroundColor: "#1a2332" }]}>
+        <Text style={{ color: "#fff", fontSize: 18 }}>Loading...</Text>
+      </View>
+    )
 
   // Menu Screen
   if (currentScreen === "menu") {
@@ -277,11 +320,8 @@ export default function MatchingPairsScreen() {
         resizeMode="cover"
       >
         <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
-
-        {/* Dark overlay for better text readability */}
         <View style={styles.overlay} />
 
-        {/* Animated Content */}
         <Animated.View
           style={[
             styles.menuContent,
@@ -291,26 +331,34 @@ export default function MatchingPairsScreen() {
             },
           ]}
         >
-          {/* Back Button */}
           <TouchableOpacity style={styles.modernBackButton} onPress={goBack}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
 
-          {/* Header */}
           <View style={styles.headerContainer}>
             <Text style={styles.mainTitle}>Matching Pairs</Text>
             <Text style={styles.description}>
               The objective is to collect the most pairs of cards. Watch out, time is limited
             </Text>
+
+            {/* Cooldown indicator for coin mode */}
+            {cooldownEndTime && Date.now() < cooldownEndTime && (
+              <View style={styles.cooldownContainer}>
+                <Text style={styles.cooldownText}>⏰ Coin mode available in: {getRemainingCooldownTime()}</Text>
+              </View>
+            )}
           </View>
 
-          {/* Action Buttons */}
           <View style={styles.buttonContainer}>
             <TouchableOpacity style={styles.secondaryButton} onPress={() => setShowGuide(true)} activeOpacity={0.8}>
               <Text style={styles.secondaryButtonText}>QUICK START GUIDE</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={startGame} activeOpacity={0.8}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={() => setCurrentScreen("mode-select")}
+              activeOpacity={0.8}
+            >
               <Text style={styles.primaryButtonText}>PLAY</Text>
             </TouchableOpacity>
           </View>
@@ -364,12 +412,10 @@ export default function MatchingPairsScreen() {
                   </View>
 
                   <View style={styles.scoringInfo}>
-                    <Text style={styles.scoringTitle}>Featured Leagues</Text>
-                    <Text style={styles.scoringText}>• Premier League (England)</Text>
-                    <Text style={styles.scoringText}>• La Liga (Spain)</Text>
-                    <Text style={styles.scoringText}>• Serie A (Italy)</Text>
-                    <Text style={styles.scoringText}>• Bundesliga (Germany)</Text>
-                    <Text style={styles.scoringText}>• Ligue 1 (France)</Text>
+                    <Text style={styles.scoringTitle}>Game Modes</Text>
+                    <Text style={styles.scoringText}>• Play for Fun - Free practice mode, play anytime</Text>
+                    <Text style={styles.scoringText}>• Play to Win Coins - Costs 10 coins, once every 12 hours</Text>
+                    <Text style={styles.scoringText}>• Complete coin mode to earn 20 coins</Text>
                   </View>
                 </View>
 
@@ -380,6 +426,78 @@ export default function MatchingPairsScreen() {
             </View>
           </View>
         </Modal>
+      </ImageBackground>
+    )
+  }
+
+  // Mode Selection Screen
+  if (currentScreen === "mode-select") {
+    return (
+      <ImageBackground
+        source={{
+          uri: "https://hebbkx1anhila5yf.public.blob.vercel-storage.com/background-rzgiMfI2oNmM3iWiTLpP4ImTU50snn.jpeg",
+        }}
+        style={styles.container}
+        resizeMode="cover"
+      >
+        <StatusBar barStyle="light-content" backgroundColor="transparent" translucent />
+        <View style={styles.overlay} />
+
+        <Animated.View style={[styles.menuContent, { opacity: fadeAnim }]}>
+          <TouchableOpacity style={styles.modernBackButton} onPress={goBack}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+
+          <View style={styles.headerContainer}>
+            <Text style={styles.mainTitle}>Choose Game Mode</Text>
+            <Text style={styles.description}>Select how you want to play</Text>
+          </View>
+
+          <View style={styles.modeContainer}>
+            {/* Play for Fun Mode */}
+            <TouchableOpacity style={styles.modeCard} onPress={() => startGame("fun")} activeOpacity={0.8}>
+              <View style={styles.modeIcon}>
+                <Text style={styles.modeIconText}>🎮</Text>
+              </View>
+              <Text style={styles.modeTitle}>Play for Fun</Text>
+              <Text style={styles.modeDescription}>
+                Enjoy the game with no stakes. Perfect your skills and have fun matching European football clubs!
+              </Text>
+              <View style={styles.modeBadge}>
+                <Text style={styles.modeBadgeText}>Free to Play</Text>
+              </View>
+            </TouchableOpacity>
+
+            {/* Play to Win Coins Mode */}
+            <TouchableOpacity
+              style={[styles.modeCard, !canPlayCoinMode() && styles.modeCardDisabled]}
+              onPress={() => startGame("coins")}
+              activeOpacity={canPlayCoinMode() ? 0.8 : 1}
+            >
+              <View style={styles.modeIcon}>
+                <Text style={styles.modeIconText}>🪙</Text>
+              </View>
+              <Text style={styles.modeTitle}>Play to Win Coins</Text>
+              <Text style={styles.modeDescription}>
+                Risk 10 coins to play. Complete the game to earn a 20 coin bonus reward!
+                {!canPlayCoinMode() && coins < 10 && "\n\n⚠️ You need 10 coins to play this mode."}
+                {!canPlayCoinMode() && coins >= 10 && `\n\n⏰ Available in ${getRemainingCooldownTime()}`}
+              </Text>
+              <View style={styles.coinInfo}>
+                <View style={styles.modeBadge}>
+                  <Text style={styles.modeBadgeText}>Entry: 10 coins</Text>
+                </View>
+                <View style={[styles.modeBadge, styles.coinsBadge]}>
+                  <Text style={styles.coinsBadgeText}>You have: {coins} coins</Text>
+                </View>
+              </View>
+              {!canPlayCoinMode() && coins < 10 && (
+                <Text style={styles.insufficientCoinsText}>❌ Not enough coins</Text>
+              )}
+              {!canPlayCoinMode() && coins >= 10 && <Text style={styles.insufficientCoinsText}>⏰ On cooldown</Text>}
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </ImageBackground>
     )
   }
@@ -406,6 +524,13 @@ export default function MatchingPairsScreen() {
               <Text style={styles.scoreLabel}>SCORE</Text>
               <Text style={styles.scoreText}>{score}</Text>
             </View>
+
+            {gameMode === "coins" && (
+              <View style={styles.coinsContainer}>
+                <Text style={styles.coinsLabel}>COINS</Text>
+                <Text style={styles.coinsText}>{coins}</Text>
+              </View>
+            )}
           </View>
         </View>
 
@@ -417,7 +542,7 @@ export default function MatchingPairsScreen() {
           <Text style={styles.progressText}>{matchedCards.length / 2}/12 pairs found</Text>
         </View>
 
-        {/* Scrollable Game Grid */}
+        {/* Game Grid */}
         <ScrollView
           style={styles.gameScrollView}
           contentContainerStyle={styles.gameGridContainer}
@@ -428,7 +553,6 @@ export default function MatchingPairsScreen() {
               const isFlipped = flippedCards.includes(card.id) || matchedCards.includes(card.id)
               const flipAnimation = cardFlipAnimations[card.id] || new Animated.Value(0)
 
-              // Create interpolated values for smooth flip
               const frontInterpolate = flipAnimation.interpolate({
                 inputRange: [0, 1],
                 outputRange: ["0deg", "180deg"],
@@ -457,7 +581,7 @@ export default function MatchingPairsScreen() {
                   activeOpacity={0.8}
                 >
                   <View style={styles.cardWrapper}>
-                    {/* Card Back (default state) */}
+                    {/* Card Back */}
                     <Animated.View
                       style={[
                         styles.card,
@@ -473,7 +597,7 @@ export default function MatchingPairsScreen() {
                       </View>
                     </Animated.View>
 
-                    {/* Card Front (flipped state) */}
+                    {/* Card Front */}
                     <Animated.View
                       style={[
                         styles.card,
@@ -505,8 +629,10 @@ export default function MatchingPairsScreen() {
           <View style={styles.modalOverlay}>
             <View style={styles.gameOverModal}>
               <View style={styles.gameOverHeader}>
-                <Text style={styles.gameOverIcon}>{matchedCards.length === 24 ? "🏆" : "⏰"}</Text>
-                <Text style={styles.gameOverTitle}>{matchedCards.length === 24 ? "Perfect Match!" : "Full Time!"}</Text>
+                <Text style={styles.gameOverIcon}>{matchedCards.length === 24 ? "🏆" : timer === 0 ? "⏰" : "🎯"}</Text>
+                <Text style={styles.gameOverTitle}>
+                  {matchedCards.length === 24 ? "Perfect Match!" : timer === 0 ? "Time's Up!" : "Game Over"}
+                </Text>
                 <Text style={styles.gameOverSubtitle}>
                   {matchedCards.length === 24
                     ? "You matched all European teams!"
@@ -529,27 +655,15 @@ export default function MatchingPairsScreen() {
                 </View>
               </View>
 
-              {matchedCards.length > 0 && (
-                <View style={styles.matchedTeamsContainer}>
-                  <Text style={styles.matchedTeamsTitle}>Teams Matched</Text>
-                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.matchedTeamsList}>
-                    {cards
-                      .filter((card) => matchedCards.includes(card.id))
-                      .filter((card, index, arr) => arr.findIndex((c) => c.team.name === card.team.name) === index)
-                      .map((card, index) => (
-                        <View key={index} style={styles.matchedTeamItem}>
-                          <Image source={{ uri: card.team.badge }} style={styles.smallBadge} resizeMode="contain" />
-                        </View>
-                      ))}
-                  </ScrollView>
+              {gameMode === "coins" && matchedCards.length === 24 && (
+                <View style={styles.coinRewardsContainer}>
+                  <Text style={styles.coinRewardsTitle}>🪙 Coin Rewards</Text>
+                  <Text style={styles.coinRewardsText}>Completion Bonus: +20 coins</Text>
+                  <Text style={styles.totalCoinsText}>Total Coins: {coins}</Text>
                 </View>
               )}
 
               <View style={styles.gameOverButtons}>
-                <TouchableOpacity style={styles.playAgainButton} onPress={startGame}>
-                  <Text style={styles.playAgainText}>Play Again</Text>
-                </TouchableOpacity>
-
                 <TouchableOpacity style={styles.menuButton} onPress={goBack}>
                   <Text style={styles.menuButtonText}>Main Menu</Text>
                 </TouchableOpacity>
@@ -600,11 +714,11 @@ const styles = StyleSheet.create({
   },
   headerContainer: {
     alignItems: "center",
-    marginBottom: 40, // Reduced from 60
-    marginTop: 40, // Add top margin
+    marginBottom: 40,
+    marginTop: 40,
   },
   mainTitle: {
-    fontSize: 36, // Reduced from 42
+    fontSize: 36,
     fontWeight: "bold",
     color: "#ffffff",
     marginBottom: 20,
@@ -614,14 +728,28 @@ const styles = StyleSheet.create({
     textShadowRadius: 4,
   },
   description: {
-    fontSize: 16, // Reduced from 18
+    fontSize: 16,
     color: "rgba(255, 255, 255, 0.95)",
     textAlign: "center",
-    lineHeight: 24, // Reduced from 26
+    lineHeight: 24,
     paddingHorizontal: 20,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 1, height: 1 },
     textShadowRadius: 2,
+  },
+  cooldownContainer: {
+    backgroundColor: "rgba(255, 152, 0, 0.2)",
+    borderRadius: 12,
+    padding: 12,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255, 152, 0, 0.3)",
+  },
+  cooldownText: {
+    color: "#FF9800",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
   },
   buttonContainer: {
     position: "absolute",
@@ -632,9 +760,9 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: "#ffffff",
-    borderRadius: 22, // Reduced from 25
-    paddingVertical: 14, // Reduced from 18
-    paddingHorizontal: 28, // Reduced from 32
+    borderRadius: 22,
+    paddingVertical: 14,
+    paddingHorizontal: 28,
     alignItems: "center",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
@@ -643,22 +771,138 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   primaryButtonText: {
-    fontSize: 16, // Reduced from 18
+    fontSize: 16,
     fontWeight: "bold",
     color: "#333333",
   },
   secondaryButton: {
-    borderRadius: 22, // Reduced from 25
+    borderRadius: 22,
     borderWidth: 2,
     borderColor: "#ffffff",
-    paddingVertical: 12, // Reduced from 16
+    paddingVertical: 12,
     alignItems: "center",
     backgroundColor: "transparent",
   },
   secondaryButtonText: {
-    fontSize: 14, // Reduced from 16
+    fontSize: 14,
     color: "#ffffff",
     fontWeight: "600",
+  },
+  modeContainer: {
+    flex: 1,
+    justifyContent: "center",
+    gap: 20,
+    paddingHorizontal: 20,
+  },
+  modeCard: {
+    backgroundColor: "rgba(255, 255, 255, 0.95)",
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+  },
+  modeCardDisabled: {
+    opacity: 0.6,
+  },
+  modeIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: "rgba(25, 118, 210, 0.1)",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modeIconText: {
+    fontSize: 24,
+  },
+  modeTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333333",
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  modeDescription: {
+    fontSize: 14,
+    color: "#666666",
+    textAlign: "center",
+    lineHeight: 20,
+    marginBottom: 16,
+  },
+  modeBadge: {
+    backgroundColor: "#e3f2fd",
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  modeBadgeText: {
+    fontSize: 12,
+    color: "#1976d2",
+    fontWeight: "600",
+  },
+  coinInfo: {
+    alignItems: "center",
+    gap: 8,
+  },
+  coinsBadge: {
+    backgroundColor: "#fff3e0",
+  },
+  coinsBadgeText: {
+    color: "#f57c00",
+  },
+  insufficientCoinsText: {
+    fontSize: 12,
+    color: "#d32f2f",
+    marginTop: 8,
+    textAlign: "center",
+  },
+  coinsContainer: {
+    alignItems: "center",
+    backgroundColor: "rgba(255, 193, 7, 0.2)",
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  coinsLabel: {
+    fontSize: 10,
+    color: "rgba(255, 193, 7, 0.8)",
+    fontWeight: "bold",
+    letterSpacing: 1,
+  },
+  coinsText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#FFC107",
+  },
+  coinRewardsContainer: {
+    backgroundColor: "rgba(255, 193, 7, 0.1)",
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 24,
+    alignItems: "center",
+  },
+  coinRewardsTitle: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#f57c00",
+    marginBottom: 8,
+  },
+  coinRewardsText: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 4,
+  },
+  totalCoinsText: {
+    fontSize: 16,
+    fontWeight: "bold",
+    color: "#f57c00",
+    marginTop: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -880,9 +1124,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.3,
     shadowRadius: 4,
   },
-  cardFlipped: {
-    transform: [{ scaleX: 1.02 }, { scaleY: 1.02 }],
-  },
   cardFlippedContent: {
     flex: 1,
     backgroundColor: "#ffffff",
@@ -972,51 +1213,9 @@ const styles = StyleSheet.create({
     textTransform: "uppercase",
     letterSpacing: 1,
   },
-  matchedTeamsContainer: {
-    width: "100%",
-    marginBottom: 32,
-  },
-  matchedTeamsTitle: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333333",
-    marginBottom: 16,
-    textAlign: "center",
-  },
-  matchedTeamsList: {
-    maxHeight: 60,
-  },
-  matchedTeamItem: {
-    width: 48,
-    height: 48,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 24,
-    padding: 8,
-    marginRight: 12,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 2,
-  },
-  smallBadge: {
-    width: "100%",
-    height: "100%",
-  },
   gameOverButtons: {
     width: "100%",
     gap: 12,
-  },
-  playAgainButton: {
-    backgroundColor: "#1976d2",
-    borderRadius: 16,
-    paddingVertical: 16,
-    alignItems: "center",
-  },
-  playAgainText: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#ffffff",
   },
   menuButton: {
     borderRadius: 16,

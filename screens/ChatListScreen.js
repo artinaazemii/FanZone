@@ -114,29 +114,33 @@ export default function ChatListScreen() {
   const navigation = useNavigation();
 
   useEffect(() => {
-    (async () => {
-      try {
-        if (auth.currentUser.uid === ADMIN_UID) {
-          await Promise.all(TEAMS.map(ensureChatDoc));
-          setRooms(TEAMS);
-        } else {
-          const uRef = doc(db, "users", auth.currentUser.uid);
-          const uSnap = await getDoc(uRef);
-          if (!uSnap.exists()) return;
+  (async () => {
+    try {
+      // Shtojmë kontrollin që auth.currentUser të mos jetë null
+      if (!auth.currentUser) return;
 
-          const { mainTeam, followingTeams = [] } = uSnap.data();
-          const all = [mainTeam, ...followingTeams].filter(Boolean);
-          const uniq = Object.values(all.reduce((o, t) => ({ ...o, [t.id]: t }), {}));
-          await Promise.all(uniq.map(ensureChatDoc));
-          setRooms(uniq);
-        }
-      } catch (e) {
-        Alert.alert("Error", "Could not load chats.");
-      } finally {
-        setLoading(false);
+      if (auth.currentUser.uid === ADMIN_UID) {
+        await Promise.all(TEAMS.map(ensureChatDoc));
+        setRooms(TEAMS);
+      } else {
+        const uRef = doc(db, "users", auth.currentUser.uid);
+        const uSnap = await getDoc(uRef);
+        if (!uSnap.exists()) return;
+
+        const { mainTeam, followingTeams = [] } = uSnap.data();
+        const all = [mainTeam, ...followingTeams].filter(Boolean);
+        const uniq = Object.values(all.reduce((o, t) => ({ ...o, [t.id]: t }), {}));
+        await Promise.all(uniq.map(ensureChatDoc));
+        setRooms(uniq);
       }
-    })();
-  }, []);
+    } catch (e) {
+      Alert.alert("Error", "Could not load chats.");
+    } finally {
+      setLoading(false);
+    }
+  })();
+}, []);
+
   useFocusEffect(
     useCallback(() => {
       if (auth.currentUser.uid === ADMIN_UID) return;

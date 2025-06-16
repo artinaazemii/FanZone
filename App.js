@@ -25,27 +25,38 @@ export default function App() {
   const [hasTeams, setHasTeams] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    let unsubSnap;
-    const unsubAuth = onAuthStateChanged(auth, (user) => {
-      setLoading(true);
-      if (user) {
-        setLoggedIn(true);
-        unsubSnap = onSnapshot(doc(db, 'users', user.uid), (snap) => {
-          setHasTeams(!!snap.data()?.mainTeam);
-          setLoading(false);
-        });
-      } else {
-        setLoggedIn(false);
-        setHasTeams(false);
+ useEffect(() => {
+  let unsubSnap;
+  const unsubAuth = onAuthStateChanged(auth, (user) => {
+    setLoading(true);
+
+    if (user) {
+      setLoggedIn(true);
+
+      // Shtojmë kontroll për të shmangur gabimin
+      const userDocRef = doc(db, 'users', user.uid);
+      unsubSnap = onSnapshot(userDocRef, (snap) => {
+        setHasTeams(!!snap.data()?.mainTeam);
         setLoading(false);
-      }
-    });
-    return () => {
-      unsubAuth();
-      unsubSnap && unsubSnap();
-    };
-  }, []);
+      }, (error) => {
+        console.error("onSnapshot error:", error.message); // për debug
+        setLoading(false);
+      });
+
+    } else {
+      if (unsubSnap) unsubSnap(); // ndalojmë snapshot në logout
+      setLoggedIn(false);
+      setHasTeams(false);
+      setLoading(false);
+    }
+  });
+
+  return () => {
+    unsubAuth();
+    if (unsubSnap) unsubSnap();
+  };
+}, []);
+
 
   if (loading) {
     return (

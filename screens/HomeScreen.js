@@ -10,68 +10,128 @@ import {
   Linking,
 } from 'react-native';
 
+const timeAgo = (dateString) => {
+  const now = new Date();
+  const published = new Date(dateString);
+  const diffInMs = now - published;
+  const diffInMinutes = Math.floor(diffInMs / 60000);
+
+  if (diffInMinutes < 1) return 'just now';
+  if (diffInMinutes < 60) return `${diffInMinutes} min ago`;
+  const diffInHours = Math.floor(diffInMinutes / 60);
+  if (diffInHours < 24) return `${diffInHours} hour${diffInHours > 1 ? 's' : ''} ago`;
+  const diffInDays = Math.floor(diffInHours / 24);
+  return `${diffInDays} day${diffInDays > 1 ? 's' : ''} ago`;
+};
+
+const categories = ['Football', 'Premier League', 'Transfers', 'Champions League'];
+
 export default function HomeScreen({ navigation }) {
   const [news, setNews] = useState([]);
   const [loadingNews, setLoadingNews] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState('Football');
+
+  const fetchNews = async (category = 'Football') => {
+    setLoadingNews(true);
+    try {
+      const res = await fetch(
+        `https://newsdata.io/api/1/news?apikey=pub_87953313fec29d330e232a87b012687583be0&q=${category}&language=en`
+      );
+      const data = await res.json();
+      setNews(data.results || []);
+    } catch (error) {
+      console.error('News fetch error:', error);
+    } finally {
+      setLoadingNews(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchNews = async () => {
-      try {
-        const res = await fetch('https://newsdata.io/api/1/news?apikey=pub_87953313fec29d330e232a87b012687583be0&q=football&language=en');
-        const data = await res.json();
-        setNews(data.results || []);
-      } catch (error) {
-        console.error('News fetch error:', error);
-      } finally {
-        setLoadingNews(false);
-      }
-    };
     fetchNews();
   }, []);
 
   return (
     <ScrollView style={styles.container}>
+      {/* Category Filters */}
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.filterScroll}>
+        {categories.map((cat) => (
+          <TouchableOpacity
+            key={cat}
+            style={[
+              styles.filterBtn,
+              selectedCategory === cat && styles.activeFilterBtn,
+            ]}
+            onPress={() => {
+              setSelectedCategory(cat);
+              fetchNews(cat);
+            }}
+          >
+            <Text
+              style={[
+                styles.filterText,
+                selectedCategory === cat && styles.activeFilterText,
+              ]}
+            >
+              {cat}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       {/* News Section */}
-      <Text style={styles.headerText}>📰 Football News</Text>
+      <Text style={styles.sectionTitle}>Latest News</Text>
+
       {loadingNews ? (
         <ActivityIndicator size="large" style={styles.loader} />
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.newsContainer}
-        >
-          {news.map((item, idx) => (
+        <>
+          {news[0] && (
             <TouchableOpacity
-              key={idx}
-              style={styles.card}
-              onPress={() => Linking.openURL(item.link)}
+              style={styles.mainNewsCard}
+              onPress={() => Linking.openURL(news[0].link)}
+              activeOpacity={0.85}
             >
-              {item.image_url ? (
-                <Image
-                  source={{ uri: item.image_url }}
-                  style={styles.cardImage}
-                  resizeMode="cover"
-                />
-              ) : (
-                <View style={styles.cardPlaceholder} />
-              )}
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
-                  {item.title}
-                </Text>
-                {item.description ? (
-                  <Text style={styles.cardDescription} numberOfLines={3}>
-                    {item.description}
-                  </Text>
-                ) : null}
+              <Image source={{ uri: news[0].image_url }} style={styles.mainNewsImage} />
+              <Text style={styles.mainNewsTitle}>{news[0].title}</Text>
+              <View style={styles.metaRow}>
+                <Text style={styles.channelName}>{news[0].source_id}</Text>
+                <Text style={styles.dot}>•</Text>
+                <Text style={styles.timeAgo}>{timeAgo(news[0].pubDate)}</Text>
               </View>
             </TouchableOpacity>
-          ))}
-        </ScrollView>
+          )}
+
+          <Text style={styles.subHeaderText}>Recomendation Topic</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.recommendScroll}
+          >
+            {news.slice(1, 10).map((item, idx) => (
+              <TouchableOpacity
+                key={idx}
+                style={styles.recommendCardHorizontal}
+                onPress={() => Linking.openURL(item.link)}
+                activeOpacity={0.85}
+              >
+                {item.image_url && (
+                  <Image source={{ uri: item.image_url }} style={styles.recommendImageH} />
+                )}
+                <Text style={styles.recommendTitleH} numberOfLines={2}>
+                  {item.title}
+                </Text>
+                <View style={styles.metaRow}>
+                  <Text style={styles.channelName}>{item.source_id}</Text>
+                  <Text style={styles.dot}>•</Text>
+                  <Text style={styles.timeAgo}>{timeAgo(item.pubDate)}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </>
       )}
 
-      {/* Games Hub Section */}
+      {/* Games Section */}
       <Text style={styles.subHeaderText}>Games Hub</Text>
       <View style={styles.gamesGrid}>
         <TouchableOpacity
@@ -85,7 +145,7 @@ export default function HomeScreen({ navigation }) {
           />
           <Text style={styles.gameText}>Matching Pairs</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity
           style={styles.gameCard}
           onPress={() => navigation.navigate('Quizzes')}
@@ -111,64 +171,102 @@ const styles = StyleSheet.create({
   loader: {
     marginTop: 20,
   },
-  headerText: {
-    fontSize: 20,
+  filterScroll: {
+    paddingLeft: 16,
+    marginBottom: 12,
+  },
+  filterBtn: {
+    backgroundColor: '#ddd',
+    paddingVertical: 6,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    marginRight: 8,
+  },
+  activeFilterBtn: {
+    backgroundColor: '#007aff',
+  },
+  filterText: {
+    fontSize: 13,
+    color: '#333',
+  },
+  activeFilterText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
+  sectionTitle: {
+    fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 16,
     marginBottom: 8,
-    color: '#333',
-  },
-  newsContainer: {
-    paddingHorizontal: 16,
-  },
-  card: {
-    width: 260,
-    marginRight: 12,
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    overflow: 'hidden',
-  },
-  cardImage: {
-    width: '100%',
-    height: 140,
-  },
-  cardPlaceholder: {
-    width: '100%',
-    height: 140,
-    backgroundColor: '#e0e0e0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cardContent: {
-    padding: 12,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#333',
-    lineHeight: 20,
-  },
-  cardDescription: {
-    fontSize: 13,
-    color: '#666',
-    marginTop: 6,
-    lineHeight: 18,
+    color: '#222',
   },
   subHeaderText: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 16,
     marginTop: 24,
     marginBottom: 12,
-    color: '#333',
+    color: '#222',
+  },
+  mainNewsCard: {
+    marginHorizontal: 16,
+    marginVertical: 10,
+  },
+  mainNewsImage: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+  },
+  mainNewsTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    marginTop: 8,
+    color: '#222',
+  },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  channelName: {
+    fontSize: 13,
+    color: '#007aff',
+  },
+  timeAgo: {
+    fontSize: 13,
+    color: '#aaa',
+  },
+  dot: {
+    marginHorizontal: 6,
+    color: '#aaa',
+  },
+  recommendScroll: {
+    paddingLeft: 16,
+    paddingRight: 8,
+  },
+  recommendCardHorizontal: {
+    width: 220,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginRight: 12,
+    padding: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  recommendImageH: {
+    width: '100%',
+    height: 100,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  recommendTitleH: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#222',
+    marginBottom: 4,
   },
   gamesGrid: {
     flexDirection: 'row',
@@ -184,13 +282,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 20,
     elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.2,
-    shadowRadius: 3.84,
   },
   matchingPairsIcon: {
     width: 90,

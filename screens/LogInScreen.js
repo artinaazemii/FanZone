@@ -96,7 +96,10 @@ const LoginScreen = ({ navigation }) => {
         onChangeText={setPassword}
         secureTextEntry
       />
-      <Button title="Login" onPress={handleLogin} />
+      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
+  <Text style={styles.loginButtonText}>Login</Text>
+</TouchableOpacity>
+
 
       {/* "Don't have an account?" Text */}
       <Text onPress={() => navigation.navigate('Signup')} style={styles.link}>
@@ -244,7 +247,20 @@ const styles = StyleSheet.create({
   modalButtonText: {
     color: '#fff',
     fontWeight: 'bold'
-  }
+  },
+  loginButton: {
+  backgroundColor: '#007aff',
+  paddingVertical: 14,
+  borderRadius: 8,
+  alignItems: 'center',
+  marginTop: 10,
+},
+loginButtonText: {
+  color: '#fff',
+  fontSize: 16,
+  fontWeight: 'bold',
+},
+
 });
 
 export default LoginScreen;

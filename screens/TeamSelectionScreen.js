@@ -11,19 +11,25 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { auth, db } from '../firebaseConfig';
-import { doc, setDoc, arrayUnion } from 'firebase/firestore';
+import {
+  doc,
+  setDoc,
+  arrayUnion,
+  getDoc,
+  deleteDoc,
+} from 'firebase/firestore';
 import Logo from './Logo';
 
 const TEAMS = [
-  { id: '1', name: 'Manchester United' },
-  { id: '2', name: 'Barcelona' },
-  { id: '3', name: 'Real Madrid' },
-  { id: '4', name: 'Bayern Munich' },
-  { id: '5', name: 'Liverpool' },
-  { id: '6', name: 'Chelsea' },
-  { id: '7', name: 'Juventus' },
-  { id: '8', name: 'PSG' },
-  { id: '9', name: 'Manchester City' },
+  { id: '1',  name: 'Manchester United' },
+  { id: '2',  name: 'Barcelona' },
+  { id: '3',  name: 'Real Madrid' },
+  { id: '4',  name: 'Bayern Munich' },
+  { id: '5',  name: 'Liverpool' },
+  { id: '6',  name: 'Chelsea' },
+  { id: '7',  name: 'Juventus' },
+  { id: '8',  name: 'PSG' },
+  { id: '9',  name: 'Manchester City' },
   { id: '10', name: 'Arsenal' },
   { id: '11', name: 'AC Milan' },
   { id: '12', name: 'Tottenham Hotspur' },
@@ -79,22 +85,33 @@ export default function TeamSelectionScreen() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigation();
 
+  /* --------------- zgjedhje ekipesh --------------- */
   const handleSelect = (t) => {
-    if (!mainTeam) return setMainTeam(t);
-    if (mainTeam.id === t.id) return setMainTeam(null);
+    if (!mainTeam) return setMainTeam(t);                // zgjidh kryesor
+    if (mainTeam.id === t.id) return setMainTeam(null);  // ç-zgjedh kryesor
+
     const exists = following.some((f) => f.id === t.id);
     if (exists) return setFollowing(following.filter((f) => f.id !== t.id));
+
     if (following.length < 3) return setFollowing([...following, t]);
     Alert.alert('Limit reached', 'You can only follow 3 teams');
   };
 
+  /* --------------- ruaj dhe menaxho anëtarësinë --------------- */
   const save = async () => {
     if (!mainTeam) return Alert.alert('Select a main team first');
     if (following.length < 3) return Alert.alert('Select 3 following teams');
 
     setLoading(true);
     const uid = auth.currentUser.uid;
+
     try {
+      /* ekipet ekzistuese para ndryshimit */
+      const oldSnap = await getDoc(doc(db, 'users', uid));
+      const oldMain   = oldSnap.exists() ? oldSnap.data().mainTeam : null;
+      const oldFollow = oldSnap.exists() ? oldSnap.data().followingTeams ?? [] : [];
+
+      /* ruaj ekipet e reja në dokumentin e përdoruesit */
       await setDoc(
         doc(db, 'users', uid),
         {
@@ -105,13 +122,14 @@ export default function TeamSelectionScreen() {
         { merge: true }
       );
 
+      /* shto përdoruesin si participant në ekipet e reja */
       const participant = {
         uid,
         name: auth.currentUser.displayName || auth.currentUser.email,
       };
-      const teams = [mainTeam, ...following];
+      const newTeams = [mainTeam, ...following];
       await Promise.all(
-        teams.map((team) =>
+        newTeams.map((team) =>
           setDoc(
             doc(db, 'teamChats', team.id),
             { participants: arrayUnion(participant) },
@@ -120,6 +138,18 @@ export default function TeamSelectionScreen() {
         )
       );
 
+      /* hiqe përdoruesin nga ekipet që nuk i përket më */
+      const removed = [
+        ...(oldMain && oldMain.id !== mainTeam.id ? [oldMain] : []),
+        ...oldFollow.filter((t) => !newTeams.some((n) => n.id === t.id)),
+      ];
+      await Promise.all(
+        removed.map((team) =>
+          deleteDoc(doc(db, 'teamChats', team.id, 'members', uid)).catch(() => {})
+        )
+      );
+
+      /* navigo te tab-at kryesore */
       nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e) {
       console.error(e);
@@ -129,20 +159,23 @@ export default function TeamSelectionScreen() {
     }
   };
 
+  /* --------------- UI --------------- */
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select 1 main + 3 to follow</Text>
+
       <FlatList
         data={TEAMS}
         keyExtractor={(i) => i.id}
         renderItem={({ item }) => {
-          const isMain = mainTeam?.id === item.id;
+          const isMain   = mainTeam?.id === item.id;
           const isFollow = following.some((f) => f.id === item.id);
+
           return (
             <TouchableOpacity
               style={[
                 styles.item,
-                isMain && styles.mainItem,
+                isMain   && styles.mainItem,
                 isFollow && styles.followItem,
               ]}
               onPress={() => handleSelect(item)}
@@ -153,20 +186,24 @@ export default function TeamSelectionScreen() {
           );
         }}
       />
+
       <TouchableOpacity
         style={[styles.button, loading && styles.disabled]}
         onPress={save}
         disabled={loading}
       >
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.btnText}>Continue</Text>}
+        {loading
+          ? <ActivityIndicator color="#fff" />
+          : <Text style={styles.btnText}>Continue</Text>}
       </TouchableOpacity>
     </View>
   );
 }
 
+/* --------------- styles --------------- */
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
-  title: { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  title:     { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -175,9 +212,9 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     borderRadius: 8,
   },
-  mainItem: { borderWidth: 2, borderColor: '#3498db' },
+  mainItem:   { borderWidth: 2, borderColor: '#3498db' },
   followItem: { borderWidth: 1, borderColor: '#67c23a' },
-  button: { backgroundColor: '#3498db', padding: 16, borderRadius: 8, alignItems: 'center' },
-  disabled: { backgroundColor: '#999' },
-  btnText: { color: '#fff', fontSize: 16 },
+  button:   { backgroundColor: '#3498db', padding: 16, borderRadius: 8, alignItems: 'center' },
+  disabled:  { backgroundColor: '#999' },
+  btnText:   { color: '#fff', fontSize: 16 },
 });

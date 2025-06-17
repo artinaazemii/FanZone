@@ -13,91 +13,73 @@ import {
   TextInput,
   Image,
 } from 'react-native';
-import { auth } from '../firebaseConfig';
-import { doc, getDoc, updateDoc, getFirestore } from 'firebase/firestore';
-import { signOut, sendPasswordResetEmail, updateProfile } from 'firebase/auth';
+import { auth, db } from '../firebaseConfig';
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  deleteDoc,
+  setDoc,
+  serverTimestamp,
+} from 'firebase/firestore';
+import {
+  signOut,
+  sendPasswordResetEmail,
+  updateProfile,
+} from 'firebase/auth';
 import * as ImagePicker from 'expo-image-picker';
 import Logo from './Logo';
 
-const db = getFirestore();
-
 const TEAMS = [
-  { id: '1',  name: 'Manchester United' },
-  { id: '2',  name: 'Barcelona' },
-  { id: '3',  name: 'Real Madrid' },
-  { id: '4',  name: 'Bayern Munich' },
-  { id: '5',  name: 'Liverpool' },
-  { id: '6',  name: 'Chelsea' },
-  { id: '7',  name: 'Juventus' },
-  { id: '8',  name: 'PSG' },
-  { id: '9',  name: 'Manchester City' },
-  { id: '10', name: 'Arsenal' },
-  { id: '11', name: 'AC Milan' },
-  { id: '12', name: 'Tottenham Hotspur' },
-  { id: '13', name: 'AS Roma' },
-  { id: '14', name: 'Inter Milan' },
-  { id: '15', name: 'Atletico Madrid' },
-  { id: '16', name: 'Sevilla FC' },
-  { id: '17', name: 'Borussia Dortmund' },
-  { id: '18', name: 'RB Leipzig' },
-  { id: '19', name: 'Olympique Lyonnais' },
-  { id: '20', name: 'Marseille' },
-  { id: '21', name: 'FC Porto' },
-  { id: '22', name: 'Benfica' },
-  { id: '23', name: 'Ajax' },
-  { id: '24', name: 'PSV Eindhoven' },
-  { id: '25', name: 'Galatasaray' },
-  { id: '26', name: 'Boca Juniors' },
-  { id: '27', name: 'River Plate' },
-  { id: '28', name: 'Flamengo' },
-  { id: '29', name: 'Sao Paulo FC' },
-  { id: '30', name: 'LA Galaxy' },
-  { id: '31', name: 'New York City FC' },
-  { id: '32', name: 'Villarreal CF' },
-  { id: '33', name: 'Real Sociedad' },
-  { id: '34', name: 'Athletic Bilbao' },
-  { id: '35', name: 'Valencia CF' },
-  { id: '36', name: 'Wolverhampton' },
-  { id: '37', name: 'Leicester City' },
-  { id: '38', name: 'West Ham United' },
-  { id: '39', name: 'Everton FC' },
-  { id: '40', name: 'Bayer Leverkusen' },
-  { id: '41', name: 'Schalke 04' },
-  { id: '42', name: 'Werder Bremen' },
-  { id: '43', name: 'Eintracht Frankfurt' },
-  { id: '44', name: 'OGC Nice' },
-  { id: '45', name: 'Celtic FC' },
-  { id: '46', name: 'Rangers FC' },
-  { id: '47', name: 'Fenerbahçe' },
-  { id: '48', name: 'Trabzonspor' },
-  { id: '49', name: 'Al Ahly SC' },
-  { id: '50', name: 'Al Hilal' },
-  { id: '51', name: 'Al Nassr' },
-  { id: '52', name: 'Guangzhou Evergrande' },
-  { id: '53', name: 'Sydney FC' },
-  { id: '54', name: 'Melbourne Victory' },
-  { id: '55', name: 'Kaizer Chiefs' },
-  { id: '56', name: 'Orlando Pirates' },
+  { id: '1',  name: 'Manchester United' },  { id: '2',  name: 'Barcelona' },
+  { id: '3',  name: 'Real Madrid' },       { id: '4',  name: 'Bayern Munich' },
+  { id: '5',  name: 'Liverpool' },         { id: '6',  name: 'Chelsea' },
+  { id: '7',  name: 'Juventus' },          { id: '8',  name: 'PSG' },
+  { id: '9',  name: 'Manchester City' },   { id: '10', name: 'Arsenal' },
+  { id: '11', name: 'AC Milan' },          { id: '12', name: 'Tottenham Hotspur' },
+  { id: '13', name: 'AS Roma' },           { id: '14', name: 'Inter Milan' },
+  { id: '15', name: 'Atletico Madrid' },   { id: '16', name: 'Sevilla FC' },
+  { id: '17', name: 'Borussia Dortmund' }, { id: '18', name: 'RB Leipzig' },
+  { id: '19', name: 'Olympique Lyonnais' },{ id: '20', name: 'Marseille' },
+  { id: '21', name: 'FC Porto' },          { id: '22', name: 'Benfica' },
+  { id: '23', name: 'Ajax' },              { id: '24', name: 'PSV Eindhoven' },
+  { id: '25', name: 'Galatasaray' },       { id: '26', name: 'Boca Juniors' },
+  { id: '27', name: 'River Plate' },       { id: '28', name: 'Flamengo' },
+  { id: '29', name: 'Sao Paulo FC' },      { id: '30', name: 'LA Galaxy' },
+  { id: '31', name: 'New York City FC' },  { id: '32', name: 'Villarreal CF' },
+  { id: '33', name: 'Real Sociedad' },     { id: '34', name: 'Athletic Bilbao' },
+  { id: '35', name: 'Valencia CF' },       { id: '36', name: 'Wolverhampton' },
+  { id: '37', name: 'Leicester City' },    { id: '38', name: 'West Ham United' },
+  { id: '39', name: 'Everton FC' },        { id: '40', name: 'Bayer Leverkusen' },
+  { id: '41', name: 'Schalke 04' },        { id: '42', name: 'Werder Bremen' },
+  { id: '43', name: 'Eintracht Frankfurt' },{ id: '44', name: 'OGC Nice' },
+  { id: '45', name: 'Celtic FC' },         { id: '46', name: 'Rangers FC' },
+  { id: '47', name: 'Fenerbahçe' },        { id: '48', name: 'Trabzonspor' },
+  { id: '49', name: 'Al Ahly SC' },        { id: '50', name: 'Al Hilal' },
+  { id: '51', name: 'Al Nassr' },          { id: '52', name: 'Guangzhou Evergrande' },
+  { id: '53', name: 'Sydney FC' },         { id: '54', name: 'Melbourne Victory' },
+  { id: '55', name: 'Kaizer Chiefs' },     { id: '56', name: 'Orlando Pirates' },
 ];
 
 const Crest = ({ team, size = 60, style }) => (
   <Logo id={team.id} size={size} style={style} />
 );
 
-const ProfileScreen = () => {
-  const [loading, setLoading] = useState(true);
+export default function ProfileScreen() {
+  const [loading, setLoading]   = useState(true);
   const [userData, setUserData] = useState(null);
   const [userPhoto, setUserPhoto] = useState(auth.currentUser?.photoURL);
 
-  /* name modal */
-  const [showName, setShowName] = useState(false);
+  /* modal “name” */
+  const [showName,  setShowName]  = useState(false);
   const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
+  const [lastName,  setLastName]  = useState('');
 
-  /* teams modal */
+  /* modal “teams” */
   const [showTeams, setShowTeams] = useState(false);
-  const [tempTeams, setTempTeams] = useState({ mainTeam: null, followingTeams: [] });
+  const [temp, setTemp] = useState({ mainTeam: null, followingTeams: [] });
 
+  /* ───────── ngarkimi fillestar ───────── */
   useEffect(() => {
     (async () => {
       try {
@@ -105,23 +87,52 @@ const ProfileScreen = () => {
         if (snap.exists()) {
           const d = snap.data();
           setUserData(d);
-          setTempTeams({
+          setTemp({
             mainTeam: d.mainTeam,
-            followingTeams: d.followingTeams || [],
+            followingTeams: d.followingTeams ?? [],
           });
-          setFirstName(d.firstName ?? auth.currentUser.displayName?.split(' ')[0] ?? '');
-          setLastName(
-            d.lastName ?? auth.currentUser.displayName?.split(' ').slice(1).join(' ') ?? ''
-          );
+          setFirstName(d.firstName ?? '');
+          setLastName(d.lastName ?? '');
         }
-      } catch (err) {
-        console.error(err);
+      } catch (e) {
+        console.error(e);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
+  /* ───────── helpers ───────── */
+  const status = (team) =>
+    temp.mainTeam?.id === team.id
+      ? 'main'
+      : temp.followingTeams.some((t) => t.id === team.id)
+      ? 'following'
+      : 'none';
+
+  const toggleTeam = (team) => {
+    if (temp.mainTeam?.id === team.id)
+      return setTemp((p) => ({ ...p, mainTeam: null }));
+
+    if (temp.followingTeams.some((t) => t.id === team.id))
+      return setTemp((p) => ({
+        ...p,
+        followingTeams: p.followingTeams.filter((t) => t.id !== team.id),
+      }));
+
+    if (!temp.mainTeam)
+      return setTemp((p) => ({ ...p, mainTeam: team }));
+
+    if (temp.followingTeams.length < 3)
+      return setTemp((p) => ({
+        ...p,
+        followingTeams: [...p.followingTeams, team],
+      }));
+
+    Alert.alert('Limit', 'Select only 3 following teams');
+  };
+
+  /* ───────── save name ───────── */
   const saveName = async () => {
     if (!firstName.trim() || !lastName.trim())
       return Alert.alert('Required', 'First and last name must not be empty');
@@ -141,50 +152,66 @@ const ProfileScreen = () => {
     }
   };
 
-  const status = (team) =>
-    tempTeams.mainTeam?.id === team.id
-      ? 'main'
-      : tempTeams.followingTeams.some((t) => t.id === team.id)
-      ? 'following'
-      : 'none';
-
-  const toggleTeam = (team) => {
-    if (tempTeams.mainTeam?.id === team.id)
-      return setTempTeams((p) => ({ ...p, mainTeam: null }));
-    if (tempTeams.followingTeams.some((t) => t.id === team.id))
-      return setTempTeams((p) => ({
-        ...p,
-        followingTeams: p.followingTeams.filter((t) => t.id !== team.id),
-      }));
-    if (!tempTeams.mainTeam) return setTempTeams((p) => ({ ...p, mainTeam: team }));
-    if (tempTeams.followingTeams.length < 3)
-      return setTempTeams((p) => ({
-        ...p,
-        followingTeams: [...p.followingTeams, team],
-      }));
-    Alert.alert('Limit', 'Select only 3 following teams');
-  };
-
+  /* ───────── save teams ───────── */
   const saveTeams = async () => {
-    if (!tempTeams.mainTeam || tempTeams.followingTeams.length < 3)
+    if (!temp.mainTeam || temp.followingTeams.length < 3)
       return Alert.alert('Pick 1 main & 3 following teams');
+
+    const uid = auth.currentUser.uid;
+    const oldMain   = userData.mainTeam;
+    const oldFollow = userData.followingTeams ?? [];
+    const newTeams  = [temp.mainTeam, ...temp.followingTeams];
+
     try {
-      await updateDoc(doc(db, 'users', auth.currentUser.uid), {
-        mainTeam: tempTeams.mainTeam,
-        followingTeams: tempTeams.followingTeams,
+      /* update user doc */
+      await updateDoc(doc(db, 'users', uid), {
+        mainTeam: temp.mainTeam,
+        followingTeams: temp.followingTeams,
         updatedAt: new Date().toISOString(),
       });
       setUserData((p) => ({
         ...p,
-        mainTeam: tempTeams.mainTeam,
-        followingTeams: tempTeams.followingTeams,
+        mainTeam: temp.mainTeam,
+        followingTeams: temp.followingTeams,
       }));
       setShowTeams(false);
+
+      /* teams added / removed */
+      const removed = [
+        ...(oldMain && !newTeams.some((t) => t.id === oldMain.id) ? [oldMain] : []),
+        ...oldFollow.filter((t) => !newTeams.some((n) => n.id === t.id)),
+      ];
+      const added = newTeams.filter(
+        (t) => ![oldMain, ...oldFollow].some((o) => o?.id === t.id)
+      );
+
+      /* leave removed teams */
+      await Promise.all(
+        removed.map((team) =>
+          deleteDoc(doc(db, 'teamChats', team.id, 'members', uid)).catch(() => {})
+        )
+      );
+
+      /* join added teams */
+      const participant = {
+        displayName: auth.currentUser.displayName || auth.currentUser.email,
+        joinedAt: serverTimestamp(),
+      };
+      await Promise.all(
+        added.map((team) =>
+          setDoc(
+            doc(db, 'teamChats', team.id, 'members', uid),
+            participant,
+            { merge: true }
+          )
+        )
+      );
     } catch (err) {
       Alert.alert('Error', err.message);
     }
   };
 
+  /* ───────── UI ───────── */
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -225,6 +252,7 @@ const ProfileScreen = () => {
             />
           </View>
         </TouchableOpacity>
+
         <Text style={styles.userName}>{displayName}</Text>
         <TouchableOpacity onPress={() => setShowName(true)}>
           <Text style={styles.editNameLink}>Edit name</Text>
@@ -232,7 +260,7 @@ const ProfileScreen = () => {
         <Text style={styles.userEmail}>{auth.currentUser.email}</Text>
       </View>
 
-      {/* teams block */}
+      {/* teams */}
       <View style={styles.teamsContainer}>
         <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>My Teams</Text>
@@ -266,6 +294,7 @@ const ProfileScreen = () => {
         )}
       </View>
 
+      {/* other buttons */}
       <TouchableOpacity
         style={styles.changePasswordButton}
         onPress={() =>
@@ -281,11 +310,11 @@ const ProfileScreen = () => {
         <Text style={styles.signOutButtonText}>Sign Out</Text>
       </TouchableOpacity>
 
-      {/* Edit Name Modal */}
+      {/* ───────── Modal Name ───────── */}
       <Modal visible={showName} animationType="fade" transparent onRequestClose={() => setShowName(false)}>
-        <View style={styles.nameModalBackdrop}>
-          <View style={styles.nameModalCard}>
-            <Text style={styles.nameModalTitle}>Update your name</Text>
+        <View style={styles.nameBackdrop}>
+          <View style={styles.nameCard}>
+            <Text style={styles.modalTitle}>Update your name</Text>
             <TextInput
               placeholder="First name"
               placeholderTextColor="#999"
@@ -300,23 +329,24 @@ const ProfileScreen = () => {
               onChangeText={setLastName}
               style={styles.nameInput}
             />
-            <View style={styles.nameModalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.cancelBtn]}
-                onPress={() => setShowName(false)}
-              >
-                <Text style={styles.cancelText}>Cancel</Text>
+            <View style={styles.rowEnd}>
+              <TouchableOpacity style={styles.modalBtn} onPress={() => setShowName(false)}>
+                <Text style={styles.btnCancel}>Cancel</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={[styles.modalBtn, styles.saveBtn]} onPress={saveName}>
-                <Text style={styles.saveText}>Save</Text>
+              <TouchableOpacity style={[styles.modalBtn, styles.btnSave]} onPress={saveName}>
+                <Text style={styles.btnSaveTxt}>Save</Text>
               </TouchableOpacity>
             </View>
           </View>
         </View>
       </Modal>
 
-      {/* Edit Teams Modal */}
-      <Modal visible={showTeams} animationType="slide" onRequestClose={() => setShowTeams(false)}>
+      {/* ───────── Modal Teams ───────── */}
+      <Modal
+        visible={showTeams}
+        animationType="slide"
+        onRequestClose={() => setShowTeams(false)}
+      >
         <View style={styles.modalContainer}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Edit Your Teams</Text>
@@ -328,10 +358,10 @@ const ProfileScreen = () => {
           <View style={styles.instructionContainer}>
             <Text style={styles.instruction}>Select 1 main team and 3 to follow</Text>
             <Text style={styles.selectionStatus}>
-              Main: {tempTeams.mainTeam ? tempTeams.mainTeam.name : '—'}
+              Main: {temp.mainTeam ? temp.mainTeam.name : '—'}
             </Text>
             <Text style={styles.selectionStatus}>
-              Following: {tempTeams.followingTeams.length}/3
+              Following: {temp.followingTeams.length}/3
             </Text>
           </View>
 
@@ -344,21 +374,19 @@ const ProfileScreen = () => {
                 <TouchableOpacity
                   style={[
                     styles.teamItem,
-                    s === 'main' && styles.mainTeamItem,
-                    s === 'following' && styles.followingTeamItem,
+                    s === 'main' && styles.mainItem,
+                    s === 'following' && styles.followItem,
                   ]}
                   onPress={() => toggleTeam(item)}
                 >
                   <Crest team={item} size={40} style={{ marginRight: 12 }} />
                   <Text style={styles.teamName}>{item.name}</Text>
                   {s === 'main' && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>Main</Text>
-                    </View>
+                    <View style={styles.badge}><Text style={styles.badgeTxt}>Main</Text></View>
                   )}
                   {s === 'following' && (
-                    <View style={[styles.badge, styles.followingBadge]}>
-                      <Text style={styles.badgeText}>Following</Text>
+                    <View style={[styles.badge, styles.badgeFollow]}>
+                      <Text style={styles.badgeTxt}>Following</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -369,163 +397,95 @@ const ProfileScreen = () => {
           <TouchableOpacity
             style={[
               styles.saveButton,
-              (!tempTeams.mainTeam || tempTeams.followingTeams.length < 3) && styles.disabledButton,
+              (!temp.mainTeam || temp.followingTeams.length < 3) && styles.disabled,
             ]}
-            disabled={!tempTeams.mainTeam || tempTeams.followingTeams.length < 3}
+            disabled={!temp.mainTeam || temp.followingTeams.length < 3}
             onPress={saveTeams}
           >
-            <Text style={styles.saveButtonText}>Save Changes</Text>
+            <Text style={styles.saveBtnTxt}>Save Changes</Text>
           </TouchableOpacity>
         </View>
       </Modal>
     </ScrollView>
   );
-};
+}
 
+/* ───────── styles ───────── */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container:{ flex:1, backgroundColor:'#f5f5f5' },
+  loadingContainer:{ flex:1, justifyContent:'center', alignItems:'center' },
 
-  header: { backgroundColor: '#3498db', padding: 20, alignItems: 'center' },
-  profileImageContainer: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-    overflow: 'hidden',
-  },
-  profileImage: { width: 100, height: 100 },
-  userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  editNameLink: { color: '#fff', textDecorationLine: 'underline', marginTop: 4 },
-  userEmail: { fontSize: 16, color: 'rgba(255,255,255,.8)', marginTop: 2 },
+  /* header */
+  header:{ backgroundColor:'#3498db', padding:20, alignItems:'center' },
+  profileImageContainer:{ width:100,height:100,borderRadius:50,overflow:'hidden',
+    backgroundColor:'#fff', justifyContent:'center',alignItems:'center', marginBottom:12 },
+  profileImage:{ width:100,height:100 },
+  userName:{ fontSize:24,fontWeight:'bold',color:'#fff' },
+  editNameLink:{ color:'#fff',textDecorationLine:'underline',marginTop:4 },
+  userEmail:{ fontSize:16,color:'rgba(255,255,255,.8)',marginTop:2 },
 
-  teamsContainer: { padding: 16 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold' },
-  editButton: { backgroundColor: '#3498db', padding: 8, borderRadius: 4 },
-  editButtonText: { color: '#fff', fontSize: 14 },
+  /* teams block */
+  teamsContainer:{ padding:16 },
+  sectionHeader:{ flexDirection:'row',justifyContent:'space-between',alignItems:'center',
+    marginBottom:16 },
+  sectionTitle:{ fontSize:20,fontWeight:'bold' },
+  editButton:{ backgroundColor:'#3498db',padding:8,borderRadius:4 },
+  editButtonText:{ color:'#fff',fontSize:14 },
 
-  teamSectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#666' },
-  mainTeamContainer: { marginBottom: 24 },
-  mainTeamCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    elevation: 2,
-  },
-  mainTeamName: { fontSize: 18, fontWeight: 'bold' },
+  teamSectionTitle:{ fontSize:16,fontWeight:'bold',marginBottom:8,color:'#666' },
+  mainTeamContainer:{ marginBottom:24 },
+  mainTeamCard:{ flexDirection:'row',alignItems:'center',backgroundColor:'#fff',
+    padding:16,borderRadius:8,elevation:2 },
+  mainTeamName:{ fontSize:18,fontWeight:'bold' },
 
-  followingTeamsContainer: { marginBottom: 24 },
-  followingTeamsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  followingTeamCard: {
-    width: '48%',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginBottom: 12,
-    elevation: 1,
-  },
-  followingTeamName: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginTop: 8 },
+  followingTeamsContainer:{ marginBottom:24 },
+  followingTeamsGrid:{ flexDirection:'row',flexWrap:'wrap',justifyContent:'space-between' },
+  followingTeamCard:{ width:'48%',backgroundColor:'#fff',padding:12,borderRadius:8,
+    alignItems:'center',marginBottom:12,elevation:1 },
+  followingTeamName:{ fontSize:14,fontWeight:'bold',textAlign:'center',marginTop:8 },
 
-  changePasswordButton: {
-    margin: 16,
-    backgroundColor: '#3498db',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  changePasswordText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
-  signOutButton: {
-    margin: 16,
-    backgroundColor: '#f44336',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  signOutButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  /* other buttons */
+  changePasswordButton:{ margin:16,backgroundColor:'#3498db',padding:16,borderRadius:8,
+    alignItems:'center' },
+  changePasswordText:{ color:'#fff',fontSize:16,fontWeight:'bold' },
+  signOutButton:{ margin:16,backgroundColor:'#f44336',padding:16,borderRadius:8,
+    alignItems:'center' },
+  signOutButtonText:{ color:'#fff',fontSize:16,fontWeight:'bold' },
 
-  /* Name modal */
-  nameModalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  nameModalCard: { backgroundColor: '#fff', borderRadius: 12, padding: 24, elevation: 4 },
-  nameModalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center' },
-  nameInput: {
-    backgroundColor: '#f5f5f5',
-    borderRadius: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 12,
-    fontSize: 16,
-    marginBottom: 14,
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-  },
-  nameModalButtons: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 8 },
-  modalBtn: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, marginLeft: 8 },
-  cancelBtn: { backgroundColor: '#e0e0e0' },
-  saveBtn: { backgroundColor: '#3498db' },
-  cancelText: { color: '#333', fontSize: 16 },
-  saveText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  /* modal name */
+  nameBackdrop:{ flex:1,backgroundColor:'rgba(0,0,0,.4)',justifyContent:'center',
+    padding:24 },
+  nameCard:{ backgroundColor:'#fff',borderRadius:12,padding:24,elevation:4 },
+  modalTitle:{ fontSize:20,fontWeight:'bold',marginBottom:20,textAlign:'center' },
+  nameInput:{ backgroundColor:'#f5f5f5',borderRadius:8,paddingHorizontal:14,paddingVertical:12,
+    fontSize:16,marginBottom:14,borderWidth:1,borderColor:'#e0e0e0' },
+  rowEnd:{ flexDirection:'row',justifyContent:'flex-end' },
+  modalBtn:{ paddingVertical:12,paddingHorizontal:20,borderRadius:8,marginLeft:8 },
+  btnCancel:{ color:'#333',fontSize:16 },
+  btnSave:{ backgroundColor:'#3498db' },
+  btnSaveTxt:{ color:'#fff',fontSize:16,fontWeight:'bold' },
 
-  /* Teams modal */
-  modalContainer: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  modalTitle: { fontSize: 20, fontWeight: 'bold' },
-  closeButton: { color: '#3498db', fontSize: 16 },
-  instructionContainer: {
-    backgroundColor: '#fff',
-    padding: 16,
-    borderRadius: 8,
-    marginBottom: 16,
-  },
-  instruction: { fontSize: 16, marginBottom: 8, textAlign: 'center' },
-  selectionStatus: { fontSize: 14, color: '#666', marginBottom: 4 },
-  teamItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 8,
-  },
-  mainTeamItem: { backgroundColor: '#e8f4ff', borderWidth: 2, borderColor: '#3498db' },
-  followingTeamItem: { backgroundColor: '#f0f9eb', borderWidth: 1, borderColor: '#67c23a' },
-  teamName: { fontSize: 16, flex: 1 },
-  badge: { backgroundColor: '#3498db', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  followingBadge: { backgroundColor: '#67c23a' },
-  badgeText: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
-  saveButton: {
-    backgroundColor: '#3498db',
-    padding: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginTop: 16,
-  },
-  disabledButton: { backgroundColor: '#b3b3b3' },
-  saveButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  /* modal teams */
+  modalContainer:{ flex:1,padding:16,backgroundColor:'#f5f5f5' },
+  modalHeader:{ flexDirection:'row',justifyContent:'space-between',alignItems:'center',
+    marginBottom:20 },
+  closeButton:{ color:'#3498db',fontSize:16 },
+  instructionContainer:{ backgroundColor:'#fff',padding:16,borderRadius:8,marginBottom:16 },
+  instruction:{ fontSize:16,marginBottom:8,textAlign:'center' },
+  selectionStatus:{ fontSize:14,color:'#666',marginBottom:4 },
+
+  teamItem:{ flexDirection:'row',alignItems:'center',backgroundColor:'#fff',
+    padding:12,borderRadius:8,marginBottom:8 },
+  mainItem:{ backgroundColor:'#e8f4ff',borderWidth:2,borderColor:'#3498db' },
+  followItem:{ backgroundColor:'#f0f9eb',borderWidth:1,borderColor:'#67c23a' },
+  teamName:{ fontSize:16,flex:1 },
+
+  badge:{ backgroundColor:'#3498db',paddingHorizontal:8,paddingVertical:4,borderRadius:12 },
+  badgeFollow:{ backgroundColor:'#67c23a' },
+  badgeTxt:{ color:'#fff',fontSize:12,fontWeight:'bold' },
+
+  saveButton:{ backgroundColor:'#3498db',padding:16,borderRadius:8,alignItems:'center',
+    marginTop:16 },
+  disabled:{ backgroundColor:'#b3b3b3' },
+  saveBtnTxt:{ color:'#fff',fontSize:16,fontWeight:'bold' },
 });
-
-export default ProfileScreen;

@@ -28,8 +28,6 @@ const Scoreboard = () => {
     { id: 'PL',  name: 'Premier League' },
     { id: 'SA',  name: 'Serie A' },
     { id: 'PD',  name: 'La Liga' },
-    { id: 'EL',  name: 'Europa League' },
-    { id: 'EFL', name: 'EFL Championship' },
   ];
 
   const fetchMatches = useCallback(async () => {

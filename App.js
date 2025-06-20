@@ -1,6 +1,10 @@
 // App.js
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
+
+/* 1️⃣  WRAPPER-i i gesturave */
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
@@ -10,18 +14,19 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { auth, db } from './firebaseConfig';
 import { CoinProvider } from './context/CoinContext';
 
-/* Screens */
-import LoginScreen from './screens/LogInScreen';
-import SignupScreen from './screens/SignupScreen';
+/* Ekranet */
+import LoginScreen         from './screens/LogInScreen';
+import SignupScreen        from './screens/SignupScreen';
 import TeamSelectionScreen from './screens/TeamSelectionScreen';
-import NavigationTabs from './navigation/Navigation'; // ← contains tabs + stack
+import NavigationTabs      from './navigation/Navigation';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
+  /* gjendja e autentikimit */
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasTeams, setHasTeams] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [loading,  setLoading]  = useState(true);
 
   useEffect(() => {
     let unsubSnap;
@@ -39,7 +44,7 @@ export default function App() {
             setLoading(false);
           },
           (error) => {
-            console.error("onSnapshot error:", error.message);
+            console.error('onSnapshot error:', error.message);
             setLoading(false);
           }
         );
@@ -57,40 +62,44 @@ export default function App() {
     };
   }, []);
 
+  /* ekran loading */
   if (loading) {
     return (
-      <SafeAreaProvider>
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-          <ActivityIndicator size="large" color="#3498db" />
-        </View>
-      </SafeAreaProvider>
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+            <ActivityIndicator size="large" color="#3498db" />
+          </View>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
     );
   }
 
+  /* aplikacioni */
   return (
-    <SafeAreaProvider>
-      <CoinProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {!loggedIn ? (
-              <>
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="Signup" component={SignupScreen} />
-              </>
-            ) : !hasTeams ? (
-              <Stack.Screen
-                name="TeamSelection"
-                component={TeamSelectionScreen}
-                options={{ headerShown: true, title: 'Select Teams' }}
-              />
-            ) : (
-              <>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <CoinProvider>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              {!loggedIn ? (
+                <>
+                  <Stack.Screen name="Login"  component={LoginScreen}  />
+                  <Stack.Screen name="Signup" component={SignupScreen} />
+                </>
+              ) : !hasTeams ? (
+                <Stack.Screen
+                  name="TeamSelection"
+                  component={TeamSelectionScreen}
+                  options={{ headerShown: true, title: 'Select Teams' }}
+                />
+              ) : (
                 <Stack.Screen name="Main" component={NavigationTabs} />
-              </>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CoinProvider>
-    </SafeAreaProvider>
+              )}
+            </Stack.Navigator>
+          </NavigationContainer>
+        </CoinProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }

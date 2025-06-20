@@ -1,5 +1,4 @@
 // navigation/Navigation.js
-
 import React from 'react';
 import {
   View,
@@ -11,7 +10,9 @@ import {
 import { FontAwesome, Ionicons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { BlurView } from 'expo-blur';
 
+/* screens (imports unchanged) */
 import HomeScreen            from '../screens/HomeScreen';
 import ScoreBoardScreen      from '../screens/ScoreBoardScreen';
 import ProfileScreen         from '../screens/ProfileScreen';
@@ -29,31 +30,28 @@ import ProfileIcon           from '../screens/ProfileIcon';
 
 import { useCoins } from '../context/CoinContext';
 
-// assets
+/* assets */
+const logo = require('../assets/logo.png');
+const coin = require('../assets/coin.png');
+
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
-const logo  = require('../assets/logo.png');
-const coin  = require('../assets/coin.png');
 
-// ─────── HEADER HELPERS ───────
+/* ─────── HEADER HELPERS ─────── */
 function CustomHeader() {
   return <Image source={logo} style={styles.logo} />;
 }
-
-// Coin badge: live everywhere
 function CoinBadge() {
   const { coins } = useCoins();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={{ fontWeight: 'bold', marginRight: 4 }}>
+      <Text style={{ fontWeight: 'bold', marginRight: 4, color: '#fff' }}>
         {coins ?? 0}
       </Text>
       <Image source={coin} style={{ width: 16, height: 16 }} />
     </View>
   );
 }
-
-// Convenience: always coin badge + profile top right
 const HeaderRight = () => (
   <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
     <CoinBadge />
@@ -62,29 +60,45 @@ const HeaderRight = () => (
   </View>
 );
 
-// ─────── TABS ───────
+/* ─────── TABS (blur footer) ─────── */
 function Tabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
+        /* glass footer */
+        tabBarBackground: () => (
+          <BlurView
+            intensity={50}
+            tint="dark"
+            style={StyleSheet.absoluteFill}
+          />
+        ),
         tabBarStyle: {
+          backgroundColor: 'rgba(0,0,0,0.25)',
+          borderTopColor: 'transparent',
           height: 60,
-          paddingBottom: 5,
-          backgroundColor: 'white',
+          paddingBottom: 6,
         },
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#c0c0c0',
+
+        /* icons */
         tabBarIcon: ({ color, size }) => {
-          let iconName;
-          if (route.name === 'Home')           iconName = 'home';
-          else if (route.name === 'Chats')     iconName = 'comments';
-          else if (route.name === 'Score Board') iconName = 'soccer-ball-o';
-          else if (route.name === 'Store')     iconName = 'shopping-cart';
-          return <FontAwesome name={iconName} size={size} color={color} />;
+          let icon = 'home';
+          if (route.name === 'Home')           icon = 'home';
+          else if (route.name === 'Chats')     icon = 'comments';
+          else if (route.name === 'Score Board') icon = 'soccer-ball-o';
+          else if (route.name === 'Store')     icon = 'shopping-cart';
+          return <FontAwesome name={icon} size={size} color={color} />;
         },
-        tabBarActiveTintColor: 'black',
-        tabBarInactiveTintColor: 'gray',
+
+        /* glass header (non-transparent) */
+        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: 'rgba(0,0,0,0.25)' },
+        headerBlurEffect: 'dark',                // iOS
         headerTitle: () => <CustomHeader />,
         headerTitleAlign: 'center',
-        headerRight: HeaderRight, // Coin badge + profile
+        headerRight: HeaderRight,
       })}
     >
       <Tab.Screen name="Home"        component={HomeScreen} />
@@ -95,47 +109,38 @@ function Tabs() {
   );
 }
 
-// ─────── STACK ───────
+/* ─────── STACK ─────── */
 export default function Navigation() {
   return (
     <Stack.Navigator
-      screenOptions={{ headerRight: HeaderRight }}
+      screenOptions={{
+        /* glass header for every pushed screen */
+        headerTintColor: '#fff',
+        headerStyle: { backgroundColor: 'rgba(0,0,0,0.25)' },
+        headerBlurEffect: 'dark',
+        headerRight: HeaderRight,
+      }}
     >
-      <Stack.Screen
-        name="MainTabs"
-        component={Tabs}
-        options={{ headerShown: false }}
-      />
+      <Stack.Screen name="MainTabs" component={Tabs} options={{ headerShown: false }} />
 
-      {/* Games */}
-      <Stack.Screen
-        name="MatchingPairs"
-        component={MatchingPairsScreen}
-        options={{ headerShown: false }}
-      />
-      <Stack.Screen
-        name="Quizzes"
-        component={QuizzesScreen}
-        options={{ headerShown: false }}
-      />
+      {/* —— Games —— */}
+      <Stack.Screen name="MatchingPairs" component={MatchingPairsScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="Quizzes"       component={QuizzesScreen}       options={{ headerShown: false }} />
       <Stack.Screen
         name="QuizGame"
         component={QuizGameScreen}
         options={({ route, navigation }) => ({
-          headerTitle: route.params?.quiz?.title || 'Quiz Game',
+          headerTitle: route.params?.quiz?.title ?? 'Quiz Game',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
       />
 
-      {/* Chat */}
+      {/* —— Chat —— */}
       <Stack.Screen
         name="TeamChat"
         component={TeamChatScreen}
@@ -143,17 +148,14 @@ export default function Navigation() {
           headerTitle: route.params.teamName,
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
       />
 
-      {/* Store */}
+      {/* —— Store —— */}
       <Stack.Screen
         name="Cart"
         component={CartScreen}
@@ -161,11 +163,8 @@ export default function Navigation() {
           headerTitle: 'Cart Details',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              onPress={() => navigation.goBack()}
-              style={{ marginLeft: 15 }}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
@@ -177,11 +176,8 @@ export default function Navigation() {
           headerTitle: route.params.teamName.toUpperCase(),
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
@@ -193,22 +189,15 @@ export default function Navigation() {
           headerTitle: 'Add Delivery Details',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
       />
-      <Stack.Screen
-        name="ProductDetail"
-        component={ProductDetailScreen}
-        options={{ title: 'Product Detail' }}
-      />
+      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product Detail' }} />
 
-      {/* Profile */}
+      {/* —— Profile —— */}
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
@@ -216,17 +205,14 @@ export default function Navigation() {
           headerTitle: () => <CustomHeader />,
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}
       />
 
-      {/* Scoreboard detail (if needed) */}
+      {/* —— Scoreboard detail —— */}
       <Stack.Screen
         name="Scoreboard"
         component={ScoreBoardScreen}
@@ -234,11 +220,8 @@ export default function Navigation() {
           headerTitle: 'Scoreboard',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity
-              style={{ marginLeft: 15 }}
-              onPress={() => navigation.goBack()}
-            >
-              <Ionicons name="arrow-back" size={24} color="black" />
+            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#fff" />
             </TouchableOpacity>
           ),
         })}

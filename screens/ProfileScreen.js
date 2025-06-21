@@ -1,4 +1,4 @@
-// screens/ProfileScreen.js
+// Updated ProfileScreen.js with improved edit name button
 import React, { useState, useEffect } from 'react';
 import {
   Alert,
@@ -70,12 +70,12 @@ export default function ProfileScreen() {
   const [userData, setUserData] = useState(null);
   const [userPhoto, setUserPhoto] = useState(auth.currentUser?.photoURL);
 
-  /* modal “name” */
+  /* modal "name" */
   const [showName,  setShowName]  = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName,  setLastName]  = useState('');
 
-  /* modal “teams” */
+  /* modal "teams" */
   const [showTeams, setShowTeams] = useState(false);
   const [temp, setTemp] = useState({ mainTeam: null, followingTeams: [] });
 
@@ -215,7 +215,7 @@ export default function ProfileScreen() {
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color="#3498db" />
+        <ActivityIndicator size="large" color="#ffffff" />
       </View>
     );
   }
@@ -253,10 +253,16 @@ export default function ProfileScreen() {
           </View>
         </TouchableOpacity>
 
-        <Text style={styles.userName}>{displayName}</Text>
-        <TouchableOpacity onPress={() => setShowName(true)}>
-          <Text style={styles.editNameLink}>Edit name</Text>
-        </TouchableOpacity>
+        <View style={styles.userInfoContainer}>
+          <Text style={styles.userName}>{displayName}</Text>
+          <TouchableOpacity 
+            style={styles.editNameButton} 
+            onPress={() => setShowName(true)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.editNameButtonText}>Edit Name</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={styles.userEmail}>{auth.currentUser.email}</Text>
       </View>
 
@@ -317,14 +323,14 @@ export default function ProfileScreen() {
             <Text style={styles.modalTitle}>Update your name</Text>
             <TextInput
               placeholder="First name"
-              placeholderTextColor="#999"
+              placeholderTextColor="#888888"
               value={firstName}
               onChangeText={setFirstName}
               style={styles.nameInput}
             />
             <TextInput
               placeholder="Last name"
-              placeholderTextColor="#999"
+              placeholderTextColor="#888888"
               value={lastName}
               onChangeText={setLastName}
               style={styles.nameInput}
@@ -412,98 +418,356 @@ export default function ProfileScreen() {
 
 /* ───────── styles ───────── */
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#121212' },
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  container: { 
+    flex: 1, 
+    backgroundColor: '#000000' 
+  },
+  loadingContainer: { 
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    backgroundColor: '#000000'
+  },
 
   /* header */
-  header: { backgroundColor: '#0a3d62', padding: 20, alignItems: 'center' },
-  profileImageContainer: {
-    width: 100, height: 100, borderRadius: 50, overflow: 'hidden',
-    backgroundColor: '#2c2c2e', justifyContent: 'center', alignItems: 'center', marginBottom: 12
+  header: { 
+    backgroundColor: '#000000', 
+    padding: 20, 
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  profileImage: { width: 100, height: 100 },
-  userName: { fontSize: 24, fontWeight: 'bold', color: '#fff' },
-  editNameLink: { color: '#fff', textDecorationLine: 'underline', marginTop: 4 },
-  userEmail: { fontSize: 16, color: 'rgba(255,255,255,.8)', marginTop: 2 },
+  profileImageContainer: {
+    width: 100, 
+    height: 100, 
+    borderRadius: 50, 
+    overflow: 'hidden',
+    backgroundColor: '#1a1a1a', 
+    justifyContent: 'center', 
+    alignItems: 'center', 
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#333333'
+  },
+  profileImage: { 
+    width: 100, 
+    height: 100 
+  },
+  userInfoContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userName: { 
+    fontSize: 24, 
+    fontWeight: 'bold', 
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  editNameButton: {
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#333333',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
+    elevation: 3,
+  },
+  editNameButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  userEmail: { 
+    fontSize: 16, 
+    color: '#cccccc', 
+    marginTop: 2 
+  },
 
   /* teams block */
-  teamsContainer: { padding: 16 },
+  teamsContainer: { 
+    padding: 16 
+  },
   sectionHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center',
     marginBottom: 16,
   },
-  sectionTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff' },
-  editButton: { backgroundColor: '#0a3d62', padding: 8, borderRadius: 4 },
-  editButtonText: { color: '#fff', fontSize: 14 },
+  sectionTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    color: '#ffffff' 
+  },
+  editButton: { 
+    backgroundColor: '#1a1a1a', 
+    padding: 8, 
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#333333'
+  },
+  editButtonText: { 
+    color: '#ffffff', 
+    fontSize: 14,
+    fontWeight: '600'
+  },
 
-  teamSectionTitle: { fontSize: 16, fontWeight: 'bold', marginBottom: 8, color: '#ccc' },
-  mainTeamContainer: { marginBottom: 24 },
+  teamSectionTitle: { 
+    fontSize: 16, 
+    fontWeight: 'bold', 
+    marginBottom: 8, 
+    color: '#cccccc' 
+  },
+  mainTeamContainer: { 
+    marginBottom: 24 
+  },
   mainTeamCard: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1f1f1f',
-    padding: 16, borderRadius: 8, elevation: 2,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#1a1a1a',
+    padding: 16, 
+    borderRadius: 12, 
+    elevation: 2,
+    borderWidth: 1,
+    borderColor: '#333333',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.22,
+    shadowRadius: 2.22,
   },
-  mainTeamName: { fontSize: 18, fontWeight: 'bold', color: '#fff' },
+  mainTeamName: { 
+    fontSize: 18, 
+    fontWeight: 'bold', 
+    color: '#ffffff' 
+  },
 
-  followingTeamsContainer: { marginBottom: 24 },
-  followingTeamsGrid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' },
-  followingTeamCard: {
-    width: '48%', backgroundColor: '#1f1f1f', padding: 12,
-    borderRadius: 8, alignItems: 'center', marginBottom: 12, elevation: 1,
+  followingTeamsContainer: { 
+    marginBottom: 24 
   },
-  followingTeamName: { fontSize: 14, fontWeight: 'bold', textAlign: 'center', marginTop: 8, color: '#fff' },
+  followingTeamsGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    justifyContent: 'space-between' 
+  },
+  followingTeamCard: {
+    width: '48%', 
+    backgroundColor: '#1a1a1a', 
+    padding: 12,
+    borderRadius: 12, 
+    alignItems: 'center', 
+    marginBottom: 12, 
+    elevation: 1,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  followingTeamName: { 
+    fontSize: 14, 
+    fontWeight: 'bold', 
+    textAlign: 'center', 
+    marginTop: 8, 
+    color: '#ffffff' 
+  },
 
   /* other buttons */
   changePasswordButton: {
-    margin: 16, backgroundColor: '#0a3d62', padding: 16, borderRadius: 8, alignItems: 'center',
+    margin: 16, 
+    backgroundColor: '#1a1a1a', 
+    padding: 16, 
+    borderRadius: 12, 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#333333',
   },
-  changePasswordText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  changePasswordText: { 
+    color: '#ffffff', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
   signOutButton: {
-    margin: 16, backgroundColor: '#d32f2f', padding: 16, borderRadius: 8, alignItems: 'center',
+    margin: 16, 
+    backgroundColor: '#cc0000', 
+    padding: 16, 
+    borderRadius: 12, 
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ff3333',
   },
-  signOutButtonText: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  signOutButtonText: { 
+    color: '#ffffff', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
 
   /* modal name */
-  nameBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,.6)', justifyContent: 'center', padding: 24 },
-  nameCard: { backgroundColor: '#1f1f1f', borderRadius: 12, padding: 24, elevation: 4 },
-  modalTitle: { fontSize: 20, fontWeight: 'bold', marginBottom: 20, textAlign: 'center', color: '#fff' },
-  nameInput: {
-    backgroundColor: '#2c2c2e', borderRadius: 8, paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 16, marginBottom: 14, borderWidth: 1, borderColor: '#333', color: '#fff',
+  nameBackdrop: { 
+    flex: 1, 
+    backgroundColor: 'rgba(0,0,0,0.8)', 
+    justifyContent: 'center', 
+    padding: 24 
   },
-  rowEnd: { flexDirection: 'row', justifyContent: 'flex-end' },
-  modalBtn: { paddingVertical: 12, paddingHorizontal: 20, borderRadius: 8, marginLeft: 8 },
-  btnCancel: { color: '#ccc', fontSize: 16 },
-  btnSave: { backgroundColor: '#0a3d62' },
-  btnSaveTxt: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  nameCard: { 
+    backgroundColor: '#1a1a1a', 
+    borderRadius: 16, 
+    padding: 24, 
+    elevation: 4,
+    borderWidth: 1,
+    borderColor: '#333333'
+  },
+  modalTitle: { 
+    fontSize: 20, 
+    fontWeight: 'bold', 
+    marginBottom: 20, 
+    textAlign: 'center', 
+    color: '#ffffff' 
+  },
+  nameInput: {
+    backgroundColor: '#000000', 
+    borderRadius: 8, 
+    paddingHorizontal: 14, 
+    paddingVertical: 12,
+    fontSize: 16, 
+    marginBottom: 14, 
+    borderWidth: 1, 
+    borderColor: '#333333', 
+    color: '#ffffff',
+  },
+  rowEnd: { 
+    flexDirection: 'row', 
+    justifyContent: 'flex-end' 
+  },
+  modalBtn: { 
+    paddingVertical: 12, 
+    paddingHorizontal: 20, 
+    borderRadius: 8, 
+    marginLeft: 8 
+  },
+  btnCancel: { 
+    color: '#cccccc', 
+    fontSize: 16 
+  },
+  btnSave: { 
+    backgroundColor: '#ffffff' 
+  },
+  btnSaveTxt: { 
+    color: '#000000', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
 
   /* modal teams */
-  modalContainer: { flex: 1, padding: 16, backgroundColor: '#121212' },
+  modalContainer: { 
+    flex: 1, 
+    padding: 16, 
+    backgroundColor: '#000000' 
+  },
   modalHeader: {
-    flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20,
+    flexDirection: 'row', 
+    justifyContent: 'space-between', 
+    alignItems: 'center', 
+    marginBottom: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333'
   },
-  closeButton: { color: '#0a3d62', fontSize: 16 },
+  closeButton: { 
+    color: '#ffffff', 
+    fontSize: 16,
+    fontWeight: '600'
+  },
   instructionContainer: {
-    backgroundColor: '#1f1f1f', padding: 16, borderRadius: 8, marginBottom: 16,
+    backgroundColor: '#1a1a1a', 
+    padding: 16, 
+    borderRadius: 12, 
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#333333'
   },
-  instruction: { fontSize: 16, marginBottom: 8, textAlign: 'center', color: '#fff' },
-  selectionStatus: { fontSize: 14, color: '#ccc', marginBottom: 4 },
+  instruction: { 
+    fontSize: 16, 
+    marginBottom: 8, 
+    textAlign: 'center', 
+    color: '#ffffff' 
+  },
+  selectionStatus: { 
+    fontSize: 14, 
+    color: '#cccccc', 
+    marginBottom: 4 
+  },
 
   teamItem: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1f1f1f',
-    padding: 12, borderRadius: 8, marginBottom: 8,
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    backgroundColor: '#1a1a1a',
+    padding: 12, 
+    borderRadius: 12, 
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: '#333333'
   },
-  mainItem: { backgroundColor: '#003366', borderWidth: 2, borderColor: '#0a3d62' },
-  followItem: { backgroundColor: '#1b3c1b', borderWidth: 1, borderColor: '#67c23a' },
-  teamName: { fontSize: 16, flex: 1, color: '#fff' },
+  mainItem: { 
+    backgroundColor: '#000000', 
+    borderWidth: 2, 
+    borderColor: '#ffffff' 
+  },
+  followItem: { 
+    backgroundColor: '#0d2818', 
+    borderWidth: 1, 
+    borderColor: '#4caf50' 
+  },
+  teamName: { 
+    fontSize: 16, 
+    flex: 1, 
+    color: '#ffffff' 
+  },
 
-  badge: { backgroundColor: '#0a3d62', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 12 },
-  badgeFollow: { backgroundColor: '#67c23a' },
-  badgeTxt: { color: '#fff', fontSize: 12, fontWeight: 'bold' },
+  badge: { 
+    backgroundColor: '#ffffff', 
+    paddingHorizontal: 8, 
+    paddingVertical: 4, 
+    borderRadius: 12 
+  },
+  badgeFollow: { 
+    backgroundColor: '#4caf50' 
+  },
+  badgeTxt: { 
+    color: '#000000', 
+    fontSize: 12, 
+    fontWeight: 'bold' 
+  },
 
   saveButton: {
-    backgroundColor: '#0a3d62', padding: 16, borderRadius: 8, alignItems: 'center', marginTop: 16,
+    backgroundColor: '#ffffff', 
+    padding: 16, 
+    borderRadius: 12, 
+    alignItems: 'center', 
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: '#333333'
   },
-  disabled: { backgroundColor: '#444' },
-  saveBtnTxt: { color: '#fff', fontSize: 16, fontWeight: 'bold' },
+  disabled: { 
+    backgroundColor: '#333333',
+    borderColor: '#555555'
+  },
+  saveBtnTxt: { 
+    color: '#000000', 
+    fontSize: 16, 
+    fontWeight: 'bold' 
+  },
 });
-

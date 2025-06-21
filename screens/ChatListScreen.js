@@ -19,7 +19,7 @@ import {
 import Logo from './Logo';
 
 /*  🔗  imazhi statik –  **require**, JO import default  */
-const BgImage = require('../assets/bg-stadium.png');  // ← ndrysho .png nëse skedari yt është png
+const BgImage = require('../assets/background.jpeg');  // ← ndrysho .png nëse skedari yt është png
 
 const ADMIN_UID = 'k7CSHSfyfIdycjostOnX0SoHF4w1';
 

@@ -1,4 +1,3 @@
-// screens/TeamSelectionScreen.js
 import React, { useState } from 'react';
 import {
   View,
@@ -19,6 +18,8 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import Logo from './Logo';
+// Add this:
+import { useTeam } from '../context/TeamContext';
 
 const TEAMS = [
   { id: '1',  name: 'Manchester United' },
@@ -85,10 +86,12 @@ export default function TeamSelectionScreen() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigation();
 
-  /* --------------- zgjedhje ekipesh --------------- */
+  // Context for sharing team selection globally
+  const { setMainTeam: setMainTeamContext } = useTeam();
+
   const handleSelect = (t) => {
-    if (!mainTeam) return setMainTeam(t);                // zgjidh kryesor
-    if (mainTeam.id === t.id) return setMainTeam(null);  // ç-zgjedh kryesor
+    if (!mainTeam) return setMainTeam(t);                // select main
+    if (mainTeam.id === t.id) return setMainTeam(null);  // unselect main
 
     const exists = following.some((f) => f.id === t.id);
     if (exists) return setFollowing(following.filter((f) => f.id !== t.id));
@@ -97,7 +100,6 @@ export default function TeamSelectionScreen() {
     Alert.alert('Limit reached', 'You can only follow 3 teams');
   };
 
-  /* --------------- ruaj dhe menaxho anëtarësinë --------------- */
   const save = async () => {
     if (!mainTeam) return Alert.alert('Select a main team first');
     if (following.length < 3) return Alert.alert('Select 3 following teams');
@@ -106,12 +108,12 @@ export default function TeamSelectionScreen() {
     const uid = auth.currentUser.uid;
 
     try {
-      /* ekipet ekzistuese para ndryshimit */
+      // Existing teams before change
       const oldSnap = await getDoc(doc(db, 'users', uid));
       const oldMain   = oldSnap.exists() ? oldSnap.data().mainTeam : null;
       const oldFollow = oldSnap.exists() ? oldSnap.data().followingTeams ?? [] : [];
 
-      /* ruaj ekipet e reja në dokumentin e përdoruesit */
+      // Save new teams to user document
       await setDoc(
         doc(db, 'users', uid),
         {
@@ -122,7 +124,7 @@ export default function TeamSelectionScreen() {
         { merge: true }
       );
 
-      /* shto përdoruesin si participant në ekipet e reja */
+      // Add user as participant in new teams
       const participant = {
         uid,
         name: auth.currentUser.displayName || auth.currentUser.email,
@@ -138,7 +140,7 @@ export default function TeamSelectionScreen() {
         )
       );
 
-      /* hiqe përdoruesin nga ekipet që nuk i përket më */
+      // Remove user from teams they no longer belong to
       const removed = [
         ...(oldMain && oldMain.id !== mainTeam.id ? [oldMain] : []),
         ...oldFollow.filter((t) => !newTeams.some((n) => n.id === t.id)),
@@ -149,10 +151,10 @@ export default function TeamSelectionScreen() {
         )
       );
 
-      /* navigo te tab-at kryesore */
+      // Save mainTeam to global context for header use!
+      setMainTeamContext(mainTeam);
+
       nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
-
-
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Could not save');
@@ -161,7 +163,6 @@ export default function TeamSelectionScreen() {
     }
   };
 
-  /* --------------- UI --------------- */
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Select 1 main + 3 to follow</Text>
@@ -202,7 +203,6 @@ export default function TeamSelectionScreen() {
   );
 }
 
-/* --------------- styles --------------- */
 const styles = StyleSheet.create({
   container: {
     flex: 1,

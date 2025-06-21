@@ -182,15 +182,17 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
   },
+  // 👇 NEW: White background for selected, no more blue
   activeFilterBtn: {
-    backgroundColor: '#1e88e5',
+    backgroundColor: '#fff',
   },
   filterText: {
     fontSize: 13,
     color: '#d1d1d6',
   },
+  // 👇 NEW: Black, bold text when selected
   activeFilterText: {
-    color: '#fff',
+    color: '#121212',
     fontWeight: 'bold',
   },
   sectionTitle: {

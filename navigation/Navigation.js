@@ -1,5 +1,4 @@
-// navigation/Navigation.js
-import React from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Image,
@@ -12,7 +11,6 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { BlurView } from 'expo-blur';
 
-/* screens (imports unchanged) */
 import HomeScreen            from '../screens/HomeScreen';
 import ScoreBoardScreen      from '../screens/ScoreBoardScreen';
 import ProfileScreen         from '../screens/ProfileScreen';
@@ -29,60 +27,81 @@ import QuizGameScreen        from '../screens/QuizGameScreen';
 import ProfileIcon           from '../screens/ProfileIcon';
 
 import { useCoins } from '../context/CoinContext';
+import { useTeam }  from '../context/TeamContext';
+import Logo         from '../screens/Logo';
 
-/* assets */
-const logo = require('../assets/logo.png');
 const coin = require('../assets/coin.png');
 
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 /* ─────── HEADER HELPERS ─────── */
-function CustomHeader() {
-  return <Image source={logo} style={styles.logo} />;
-}
 function CoinBadge() {
   const { coins } = useCoins();
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-      <Text style={{ fontWeight: 'bold', marginRight: 4, color: '#fff' }}>
+    <View style={styles.coinBadge}>
+      <Text style={styles.coinText}>
         {coins ?? 0}
       </Text>
-      <Image source={coin} style={{ width: 16, height: 16 }} />
+      <Image source={coin} style={styles.coinImage} />
     </View>
   );
 }
+
+// Coins + ONLY Team logo on Home header (no name)
+const CoinsAndTeam = () => {
+  const { mainTeam } = useTeam();
+  return (
+    <View style={styles.headerRightContainer}>
+      <CoinBadge />
+      {mainTeam && (
+        <Logo id={mainTeam.id} size={24} style={styles.teamLogo} />
+      )}
+    </View>
+  );
+};
+
 const HeaderRight = () => (
-  <View style={{ flexDirection: 'row', alignItems: 'center', marginRight: 15 }}>
+  <View style={styles.headerRightContainer}>
     <CoinBadge />
-    <View style={{ width: 10 }} />
+    <View style={styles.spacer} />
     <ProfileIcon size={30} />
   </View>
 );
+
+/* ─────── STORE HEADER ─────── */
+const StoreHeaderTitle = () => (
+  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+    <ProfileIcon size={28} style={{ marginRight: 10 }} />
+    <Text style={{ color: '#fff', fontSize: 22, fontWeight: 'bold' }}>
+      Store
+    </Text>
+  </View>
+);
+
+// --- FIX APPLIED HERE ---
+const StoreHeaderRight = () => (
+  <View style={{ marginRight: 16 }}>
+    <CoinBadge />
+  </View>
+);
+// --- END FIX ---
 
 /* ─────── TABS (blur footer) ─────── */
 function Tabs() {
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
-        /* glass footer */
         tabBarBackground: () => (
           <BlurView
-            intensity={50}
+            intensity={80}
             tint="dark"
             style={StyleSheet.absoluteFill}
           />
         ),
-        tabBarStyle: {
-          backgroundColor: 'rgba(0,0,0,0.25)',
-          borderTopColor: 'transparent',
-          height: 60,
-          paddingBottom: 6,
-        },
-        tabBarActiveTintColor: '#fff',
-        tabBarInactiveTintColor: '#c0c0c0',
-
-        /* icons */
+        tabBarStyle: styles.tabBarStyle,
+        tabBarActiveTintColor: '#ffffff',
+        tabBarInactiveTintColor: '#888888',
         tabBarIcon: ({ color, size }) => {
           let icon = 'home';
           if (route.name === 'Home')           icon = 'home';
@@ -91,39 +110,78 @@ function Tabs() {
           else if (route.name === 'Store')     icon = 'shopping-cart';
           return <FontAwesome name={icon} size={size} color={color} />;
         },
-
-        /* glass header (non-transparent) */
-        headerTintColor: '#fff',
-        headerStyle: { backgroundColor: 'rgba(0,0,0,0.25)' },
-        headerBlurEffect: 'dark',                // iOS
-        headerTitle: () => <CustomHeader />,
+        headerTintColor: '#ffffff',
+        headerStyle: styles.headerStyle,
+        headerBlurEffect: 'dark',
         headerTitleAlign: 'center',
         headerRight: HeaderRight,
       })}
     >
-      <Tab.Screen name="Home"        component={HomeScreen} />
-      <Tab.Screen name="Chats"       component={ChatListScreen} />
-      <Tab.Screen name="Score Board" component={ScoreBoardScreen} />
-      <Tab.Screen name="Store"       component={StoreScreen} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          headerTitle: () => (
+            <View style={styles.homeTitleContainer}>
+              <ProfileIcon size={28} style={styles.homeProfileIcon} />
+              <Text style={styles.homeTitleText}>
+                Home
+              </Text>
+            </View>
+          ),
+          headerTitleAlign: 'left',
+          headerRight: CoinsAndTeam,
+          headerLeft: () => null,
+        }}
+      />
+      <Tab.Screen
+        name="Chats"
+        component={ChatListScreen}
+        options={{
+          headerTitle: 'Chats',
+          headerRight: undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Score Board"
+        component={ScoreBoardScreen}
+        options={{
+          headerTitle: 'Score Board',
+          headerRight: undefined,
+        }}
+      />
+      <Tab.Screen
+        name="Store"
+        component={StoreScreen}
+        options={{
+          headerTitle: StoreHeaderTitle,
+          headerRight: StoreHeaderRight, // 👈 now spaced from border
+          headerTitleAlign: 'left',
+          headerLeft: () => null,
+        }}
+      />
     </Tab.Navigator>
   );
 }
 
-/* ─────── STACK ─────── */
-export default function Navigation() {
+// Accept mainTeam as prop and update context!
+export default function NavigationTabs({ mainTeam }) {
+  const { setMainTeam } = useTeam();
+  useEffect(() => {
+    if (mainTeam) setMainTeam(mainTeam);
+  }, [mainTeam, setMainTeam]);
+
   return (
     <Stack.Navigator
       screenOptions={{
-        /* glass header for every pushed screen */
-        headerTintColor: '#fff',
-        headerStyle: { backgroundColor: 'rgba(0,0,0,0.25)' },
+        headerTintColor: '#ffffff',
+        headerStyle: styles.headerStyle,
         headerBlurEffect: 'dark',
         headerRight: HeaderRight,
       }}
     >
       <Stack.Screen name="MainTabs" component={Tabs} options={{ headerShown: false }} />
-
-      {/* —— Games —— */}
+      {/* Other stack screens... */}
       <Stack.Screen name="MatchingPairs" component={MatchingPairsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Quizzes"       component={QuizzesScreen}       options={{ headerShown: false }} />
       <Stack.Screen
@@ -133,14 +191,12 @@ export default function Navigation() {
           headerTitle: route.params?.quiz?.title ?? 'Quiz Game',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
       />
-
-      {/* —— Chat —— */}
       <Stack.Screen
         name="TeamChat"
         component={TeamChatScreen}
@@ -148,14 +204,12 @@ export default function Navigation() {
           headerTitle: route.params.teamName,
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
       />
-
-      {/* —— Store —— */}
       <Stack.Screen
         name="Cart"
         component={CartScreen}
@@ -163,8 +217,8 @@ export default function Navigation() {
           headerTitle: 'Cart Details',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
@@ -176,8 +230,8 @@ export default function Navigation() {
           headerTitle: route.params.teamName.toUpperCase(),
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
@@ -189,30 +243,31 @@ export default function Navigation() {
           headerTitle: 'Add Delivery Details',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
       />
-      <Stack.Screen name="ProductDetail" component={ProductDetailScreen} options={{ title: 'Product Detail' }} />
-
-      {/* —— Profile —— */}
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{ title: 'Product Detail' }}
+      />
       <Stack.Screen
         name="Profile"
         component={ProfileScreen}
         options={({ navigation }) => ({
-          headerTitle: () => <CustomHeader />,
+          headerTitle: 'Profile',
           headerTitleAlign: 'center',
+          headerRight: undefined,
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
       />
-
-      {/* —— Scoreboard detail —— */}
       <Stack.Screen
         name="Scoreboard"
         component={ScoreBoardScreen}
@@ -220,8 +275,8 @@ export default function Navigation() {
           headerTitle: 'Scoreboard',
           headerTitleAlign: 'center',
           headerLeft: () => (
-            <TouchableOpacity style={{ marginLeft: 15 }} onPress={navigation.goBack}>
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+            <TouchableOpacity style={styles.backButton} onPress={navigation.goBack}>
+              <Ionicons name="arrow-back" size={24} color="#ffffff" />
             </TouchableOpacity>
           ),
         })}
@@ -231,5 +286,92 @@ export default function Navigation() {
 }
 
 const styles = StyleSheet.create({
-  logo: { width: 100, height: 70, resizeMode: 'contain' },
+  // Header styles
+  headerStyle: {
+    backgroundColor: '#000000',
+    borderBottomWidth: 1,
+    borderBottomColor: '#333333',
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  
+  // Tab bar styles
+  tabBarStyle: {
+    backgroundColor: '#000000',
+    borderTopWidth: 1,
+    borderTopColor: '#333333',
+    height: 65,
+    paddingBottom: 8,
+    paddingTop: 8,
+    shadowColor: '#000000',
+    shadowOffset: {
+      width: 0,
+      height: -2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  
+  // Coin badge styles
+  coinBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1a1a1a',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+  },
+  coinText: {
+    fontWeight: 'bold',
+    marginRight: 4,
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  coinImage: {
+    width: 16,
+    height: 16,
+  },
+  
+  // Header container styles
+  headerRightContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginRight: 15,
+  },
+  
+  // Home screen specific styles
+  homeTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  homeProfileIcon: {
+    marginRight: 10,
+  },
+  homeTitleText: {
+    color: '#ffffff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginLeft: 4,
+  },
+  
+  // Utility styles
+  teamLogo: {
+    marginLeft: 12,
+  },
+  spacer: {
+    width: 10,
+  },
+  backButton: {
+    marginLeft: 15,
+    padding: 4,
+  },
 });

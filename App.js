@@ -1,32 +1,28 @@
-// App.js
 import React, { useEffect, useState } from 'react';
 import { View, ActivityIndicator } from 'react-native';
-
-/* 1️⃣  WRAPPER-i i gesturave */
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
-
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { onSnapshot, doc } from 'firebase/firestore';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-
 import { auth, db } from './firebaseConfig';
-import { CoinProvider } from './context/CoinContext';
 
-/* Ekranet */
+import { CoinProvider } from './context/CoinContext';
+import { TeamProvider } from './context/TeamContext';
+
 import LoginScreen         from './screens/LogInScreen';
 import SignupScreen        from './screens/SignupScreen';
 import TeamSelectionScreen from './screens/TeamSelectionScreen';
 import NavigationTabs      from './navigation/Navigation';
+import ProfileScreen       from './screens/ProfileScreen';
+import ScoreBoardScreen    from './screens/ScoreBoardScreen';
 
 const Stack = createNativeStackNavigator();
 
 export default function App() {
-  /* gjendja e autentikimit */
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasTeams, setHasTeams] = useState(false);
-  const [loading,  setLoading]  = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [mainTeam, setMainTeam] = useState(null); // <-- Add this state
 
   useEffect(() => {
     let unsubSnap;
@@ -35,23 +31,22 @@ export default function App() {
 
       if (user) {
         setLoggedIn(true);
-        const userDocRef = doc(db, 'users', user.uid);
 
-        unsubSnap = onSnapshot(
-          userDocRef,
-          (snap) => {
-            setHasTeams(!!snap.data()?.mainTeam);
-            setLoading(false);
-          },
-          (error) => {
-            console.error('onSnapshot error:', error.message);
-            setLoading(false);
-          }
-        );
+        const userDocRef = doc(db, 'users', user.uid);
+        unsubSnap = onSnapshot(userDocRef, (snap) => {
+          setHasTeams(!!snap.data()?.mainTeam);
+          setMainTeam(snap.data()?.mainTeam || null); // <-- Store mainTeam!
+          setLoading(false);
+        }, (error) => {
+          console.error("onSnapshot error:", error.message);
+          setLoading(false);
+        });
+
       } else {
         if (unsubSnap) unsubSnap();
         setLoggedIn(false);
         setHasTeams(false);
+        setMainTeam(null); // <-- Clear mainTeam on logout
         setLoading(false);
       }
     });
@@ -62,44 +57,51 @@ export default function App() {
     };
   }, []);
 
-  /* ekran loading */
   if (loading) {
     return (
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <ActivityIndicator size="large" color="#3498db" />
-          </View>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#3498db" />
+      </View>
     );
   }
 
-  /* aplikacioni */
   return (
-    <GestureHandlerRootView style={{ flex: 1 }}>
-      <SafeAreaProvider>
-        <CoinProvider>
-          <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }}>
-              {!loggedIn ? (
-                <>
-                  <Stack.Screen name="Login"  component={LoginScreen}  />
-                  <Stack.Screen name="Signup" component={SignupScreen} />
-                </>
-              ) : !hasTeams ? (
+    <TeamProvider>
+      <CoinProvider>
+        <NavigationContainer>
+          <Stack.Navigator screenOptions={{ headerShown: false }}>
+            {!loggedIn ? (
+              <>
+                <Stack.Screen name="Login" component={LoginScreen} />
+                <Stack.Screen name="Signup" component={SignupScreen} />
+              </>
+            ) : !hasTeams ? (
+              <Stack.Screen
+                name="TeamSelection"
+                component={TeamSelectionScreen}
+                options={{ headerShown: true, title: 'Select Teams' }}
+              />
+            ) : (
+              <>
+                {/* Pass mainTeam as a prop! */}
+                <Stack.Screen name="Main">
+                  {() => <NavigationTabs mainTeam={mainTeam} />}
+                </Stack.Screen>
                 <Stack.Screen
-                  name="TeamSelection"
-                  component={TeamSelectionScreen}
-                  options={{ headerShown: true, title: 'Select Teams' }}
+                  name="Profile"
+                  component={ProfileScreen}
+                  options={{ headerShown: true, title: 'My Profile' }}
                 />
-              ) : (
-                <Stack.Screen name="Main" component={NavigationTabs} />
-              )}
-            </Stack.Navigator>
-          </NavigationContainer>
-        </CoinProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+                <Stack.Screen
+                  name="Scoreboard"
+                  component={ScoreBoardScreen}
+                  options={{ headerShown: true, title: 'Scoreboard' }}
+                />
+              </>
+            )}
+          </Stack.Navigator>
+        </NavigationContainer>
+      </CoinProvider>
+    </TeamProvider>
   );
 }

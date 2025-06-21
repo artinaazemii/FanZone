@@ -220,16 +220,18 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#2c2c2e',
   },
+  // ---- NEW!
   compBtnSel: {
-    backgroundColor: '#1e88e5',
+    backgroundColor: '#fff',
   },
   compText: {
     color: '#d1d1d6',
     fontSize: 12,
   },
+  // ---- NEW!
   compTextSel: {
-    color: '#fff',
-    fontWeight: '600',
+    color: '#121212',
+    fontWeight: 'bold',
   },
 
   tabBar: {
@@ -346,6 +348,4 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
 });
-
-
 export default Scoreboard;

@@ -640,20 +640,21 @@ export default function MatchingPairsScreen() {
                 </Text>
               </View>
 
-              <View style={styles.finalStats}>
-                <View style={styles.finalStatItem}>
-                  <Text style={styles.finalStatNumber}>{score}</Text>
-                  <Text style={styles.finalStatLabel}>Final Score</Text>
-                </View>
-                <View style={styles.finalStatItem}>
-                  <Text style={styles.finalStatNumber}>{matchedCards.length / 2}</Text>
-                  <Text style={styles.finalStatLabel}>Pairs Found</Text>
-                </View>
-                <View style={styles.finalStatItem}>
-                  <Text style={styles.finalStatNumber}>{50 - timer}s</Text>
-                  <Text style={styles.finalStatLabel}>Time Used</Text>
-                </View>
-              </View>
+              <View style={styles.statsRow}>
+  <View style={styles.statsCol}>
+    <Text style={styles.statsValue}>{score}</Text>
+    <Text style={styles.statsLabel}>Score</Text>
+  </View>
+  <View style={styles.statsCol}>
+    <Text style={styles.statsValue}>{matchedCards.length / 2}</Text>
+    <Text style={styles.statsLabel}>Pairs</Text>
+  </View>
+  <View style={styles.statsCol}>
+    <Text style={styles.statsValue}>{50 - timer}s</Text>
+    <Text style={styles.statsLabel}>Time</Text>
+  </View>
+</View>
+
 
               {gameMode === "coins" && matchedCards.length === 24 && (
                 <View style={styles.coinRewardsContainer}>
@@ -707,6 +708,38 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "rgba(255, 255, 255, 0.3)",
   },
+  statsRow: {
+  flexDirection: 'row',
+  justifyContent: 'space-between',
+  alignItems: 'center',
+  width: '100%',
+  backgroundColor: 'rgba(25,118,210,0.08)',
+  borderRadius: 18,
+  paddingVertical: 18,
+  paddingHorizontal: 4,
+  marginTop: 10,
+  marginBottom: 24,
+},
+statsCol: {
+  flex: 1,
+  alignItems: 'center',
+  minWidth: 85,
+},
+statsValue: {
+  fontSize: 26,
+  fontWeight: 'bold',
+  color: '#1976d2',
+  marginBottom: 3,
+  textAlign: 'center',
+},
+statsLabel: {
+  fontSize: 13,
+  color: '#444',
+  textTransform: 'uppercase',
+  letterSpacing: 0.5,
+  textAlign: 'center',
+},
+
   backIcon: {
     fontSize: 20,
     color: "#ffffff",
@@ -1190,29 +1223,37 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   finalStats: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    width: "100%",
-    marginBottom: 32,
-    backgroundColor: "rgba(25, 118, 210, 0.1)",
-    borderRadius: 16,
-    paddingVertical: 20,
-  },
-  finalStatItem: {
-    alignItems: "center",
-  },
-  finalStatNumber: {
-    fontSize: 24,
-    fontWeight: "bold",
-    color: "#1976d2",
-    marginBottom: 4,
-  },
-  finalStatLabel: {
-    fontSize: 12,
-    color: "#666",
-    textTransform: "uppercase",
-    letterSpacing: 1,
-  },
+  flexDirection: "row",
+  justifyContent: "space-around",
+  alignItems: "center",
+  width: "100%",
+  marginBottom: 32,
+  backgroundColor: "rgba(25, 118, 210, 0.07)",
+  borderRadius: 16,
+  paddingVertical: 20,
+  paddingHorizontal: 8, // NEW: a bit of horizontal space
+  gap: 0,               // NEW: let children control their own space
+},
+finalStatItem: {
+  alignItems: "center",
+  flex: 1,                // NEW: columns take equal space
+  minWidth: 90,           // NEW: minimum width for clarity
+},
+finalStatNumber: {
+  fontSize: 28,           // Slightly larger number
+  fontWeight: "bold",
+  color: "#1976d2",
+  marginBottom: 4,
+  lineHeight: 34,         // More vertical room
+},
+finalStatLabel: {
+  fontSize: 12,
+  color: "#666",
+  textTransform: "uppercase",
+  letterSpacing: 1,
+  marginTop: 2,           // Space above label
+},
+
   gameOverButtons: {
     width: "100%",
     gap: 12,

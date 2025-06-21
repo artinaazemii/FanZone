@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { onSnapshot, doc } from 'firebase/firestore';
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; // ← SHTO KËTË
+
 import { auth, db } from './firebaseConfig';
 
 import { CoinProvider } from './context/CoinContext';
@@ -22,7 +24,7 @@ export default function App() {
   const [loggedIn, setLoggedIn] = useState(false);
   const [hasTeams, setHasTeams] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [mainTeam, setMainTeam] = useState(null); // <-- Add this state
+  const [mainTeam, setMainTeam] = useState(null);
 
   useEffect(() => {
     let unsubSnap;
@@ -35,7 +37,7 @@ export default function App() {
         const userDocRef = doc(db, 'users', user.uid);
         unsubSnap = onSnapshot(userDocRef, (snap) => {
           setHasTeams(!!snap.data()?.mainTeam);
-          setMainTeam(snap.data()?.mainTeam || null); // <-- Store mainTeam!
+          setMainTeam(snap.data()?.mainTeam || null);
           setLoading(false);
         }, (error) => {
           console.error("onSnapshot error:", error.message);
@@ -46,7 +48,7 @@ export default function App() {
         if (unsubSnap) unsubSnap();
         setLoggedIn(false);
         setHasTeams(false);
-        setMainTeam(null); // <-- Clear mainTeam on logout
+        setMainTeam(null);
         setLoading(false);
       }
     });
@@ -66,42 +68,49 @@ export default function App() {
   }
 
   return (
-    <TeamProvider>
-      <CoinProvider>
-        <NavigationContainer>
-          <Stack.Navigator screenOptions={{ headerShown: false }}>
-            {!loggedIn ? (
-              <>
-                <Stack.Screen name="Login" component={LoginScreen} />
-                <Stack.Screen name="Signup" component={SignupScreen} />
-              </>
-            ) : !hasTeams ? (
-              <Stack.Screen
-                name="TeamSelection"
-                component={TeamSelectionScreen}
-                options={{ headerShown: true, title: 'Select Teams' }}
-              />
-            ) : (
-              <>
-                {/* Pass mainTeam as a prop! */}
-                <Stack.Screen name="Main">
-                  {() => <NavigationTabs mainTeam={mainTeam} />}
-                </Stack.Screen>
+    <GestureHandlerRootView style={styles.container}>
+      <TeamProvider>
+        <CoinProvider>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }}>
+              {!loggedIn ? (
+                <>
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="Signup" component={SignupScreen} />
+                </>
+              ) : !hasTeams ? (
                 <Stack.Screen
-                  name="Profile"
-                  component={ProfileScreen}
-                  options={{ headerShown: true, title: 'My Profile' }}
+                  name="TeamSelection"
+                  component={TeamSelectionScreen}
+                  options={{ headerShown: true, title: 'Select Teams' }}
                 />
-                <Stack.Screen
-                  name="Scoreboard"
-                  component={ScoreBoardScreen}
-                  options={{ headerShown: true, title: 'Scoreboard' }}
-                />
-              </>
-            )}
-          </Stack.Navigator>
-        </NavigationContainer>
-      </CoinProvider>
-    </TeamProvider>
+              ) : (
+                <>
+                  <Stack.Screen name="Main">
+                    {() => <NavigationTabs mainTeam={mainTeam} />}
+                  </Stack.Screen>
+                  <Stack.Screen
+                    name="Profile"
+                    component={ProfileScreen}
+                    options={{ headerShown: true, title: 'My Profile' }}
+                  />
+                  <Stack.Screen
+                    name="Scoreboard"
+                    component={ScoreBoardScreen}
+                    options={{ headerShown: true, title: 'Scoreboard' }}
+                  />
+                </>
+              )}
+            </Stack.Navigator>
+          </NavigationContainer>
+        </CoinProvider>
+      </TeamProvider>
+    </GestureHandlerRootView>
   );
 }
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+});

@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TextInput, Button, StyleSheet, Alert,
-  TouchableOpacity, Image, Platform, Modal
+  View, Text, TextInput, Alert,
+  TouchableOpacity, Image, Platform, Modal, StyleSheet
 } from 'react-native';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 
-
 const LoginScreen = ({ navigation }) => {
+  // Dark mode is always ON
+  const isDark = true;
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
- 
+
   // States for Android password reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
@@ -25,20 +27,14 @@ const LoginScreen = ({ navigation }) => {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
 
-      // Check if email is verified
       if (!user.emailVerified) {
         Alert.alert("Email Not Verified", "Please verify your email before logging in.");
-        await auth.signOut(); // Log the user out if email is not verified
+        await auth.signOut();
         return;
       }
-     
-      // Display a welcome message with the user's display name.
-      // (Display name was set during sign up by updateProfile.)
+
       const displayName = user.displayName || 'Football Fan';
       Alert.alert("Welcome", `Welcome ${displayName}!`);
-
-      // Navigate to the main app screen after successful login
-      // Nuk navigon fare – vetëm pret që App.js ta kuptojë që përdoruesi është loguar.
 
     } catch (error) {
       console.error("Login error:", error.message);
@@ -48,7 +44,6 @@ const LoginScreen = ({ navigation }) => {
 
   const forgetPassword = () => {
     if (Platform.OS === 'ios') {
-      // Use Alert.prompt on iOS
       Alert.prompt(
         "Reset Password",
         "Please enter your email address for password reset",
@@ -67,51 +62,49 @@ const LoginScreen = ({ navigation }) => {
             });
         },
         "plain-text",
-        email // default value, if available
+        email
       );
     } else {
-      // For Android, show a custom modal to input email
       setResetModalVisible(true);
     }
   };
 
-  return (
-    <View style={styles.container}>
-      {/* Logo at the top */}
-      <Image source={require('../assets/logo.png')} style={styles.logo} />
+  const themeStyles = getStyles(isDark);
 
-      <Text style={styles.title}>Login</Text>
+  return (
+    <View style={themeStyles.container}>
+      <Image source={require('../assets/logo.png')} style={themeStyles.logo} />
+
+      <Text style={themeStyles.title}>Login</Text>
       <TextInput
-        style={styles.input}
+        style={themeStyles.input}
         placeholder="Email"
+        placeholderTextColor="#aaa"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
         autoCapitalize="none"
       />
       <TextInput
-        style={styles.input}
+        style={themeStyles.input}
         placeholder="Password"
+        placeholderTextColor="#aaa"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-  <Text style={styles.loginButtonText}>Login</Text>
-</TouchableOpacity>
+      <TouchableOpacity style={themeStyles.loginButton} onPress={handleLogin}>
+        <Text style={themeStyles.loginButtonText}>Login</Text>
+      </TouchableOpacity>
 
-
-      {/* "Don't have an account?" Text */}
-      <Text onPress={() => navigation.navigate('Signup')} style={styles.link}>
+      <Text onPress={() => navigation.navigate('Signup')} style={themeStyles.link}>
         Don't have an account? Sign up
       </Text>
 
-      {/* "Forget Password?" Touchable */}
-      <TouchableOpacity onPress={forgetPassword} style={styles.forgetPasswordContainer}>
-        <Text style={styles.link}>Forgot Password?</Text>
+      <TouchableOpacity onPress={forgetPassword} style={themeStyles.forgetPasswordContainer}>
+        <Text style={themeStyles.link}>Forgot Password?</Text>
       </TouchableOpacity>
 
-      {/* Android Reset Password Modal */}
       {Platform.OS !== 'ios' && (
         <Modal
           animationType="slide"
@@ -119,30 +112,31 @@ const LoginScreen = ({ navigation }) => {
           visible={resetModalVisible}
           onRequestClose={() => setResetModalVisible(false)}
         >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContainer}>
-              <Text style={styles.modalTitle}>Reset Password</Text>
-              <Text>Please enter your email address:</Text>
+          <View style={themeStyles.modalOverlay}>
+            <View style={themeStyles.modalContainer}>
+              <Text style={themeStyles.modalTitle}>Reset Password</Text>
+              <Text style={{color: "#fff"}}>Please enter your email address:</Text>
               <TextInput
-                style={styles.modalInput}
+                style={themeStyles.modalInput}
                 value={resetEmail}
                 onChangeText={setResetEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 placeholder="Email"
+                placeholderTextColor="#aaa"
               />
-              <View style={styles.modalButtonsContainer}>
+              <View style={themeStyles.modalButtonsContainer}>
                 <TouchableOpacity
-                  style={styles.modalButton}
+                  style={themeStyles.modalButton}
                   onPress={() => {
                     setResetModalVisible(false);
                     setResetEmail('');
                   }}
                 >
-                  <Text style={styles.modalButtonText}>Cancel</Text>
+                  <Text style={themeStyles.modalButtonText}>Cancel</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
-                  style={styles.modalButton}
+                  style={themeStyles.modalButton}
                   onPress={() => {
                     if (!resetEmail) {
                       Alert.alert("Error", "Email is required for password reset");
@@ -160,7 +154,7 @@ const LoginScreen = ({ navigation }) => {
                       });
                   }}
                 >
-                  <Text style={styles.modalButtonText}>Submit</Text>
+                  <Text style={themeStyles.modalButtonText}>Submit</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -171,96 +165,101 @@ const LoginScreen = ({ navigation }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'center',
-    backgroundColor: '#fff'
-  },
-  logo: {
-    width: 120,
-    height: 120,
-    alignSelf: 'center',
-    marginBottom: 20,
-    resizeMode: 'contain'
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    textAlign: 'center'
-  },
-  input: {
-    borderWidth: 1,
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 5,
-    borderColor: '#ccc'
-  },
-  link: {
-    marginTop: 10,
-    color: 'blue',
-    textAlign: 'center'
-  },
-  forgetPasswordContainer: {
-    marginTop: 10,
-    alignItems: 'center'
-  },
-  // Modal styles for Android
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center'
-  },
-  modalContainer: {
-    width: '80%',
-    backgroundColor: '#fff',
-    borderRadius: 8,
-    padding: 20,
-    elevation: 5
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginBottom: 15,
-    textAlign: 'center'
-  },
-  modalInput: {
-    borderWidth: 1,
-    padding: 10,
-    marginBottom: 15,
-    borderRadius: 5,
-    borderColor: '#ccc'
-  },
-  modalButtonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around'
-  },
-  modalButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    backgroundColor: '#3498db',
-    borderRadius: 5
-  },
-  modalButtonText: {
-    color: '#fff',
-    fontWeight: 'bold'
-  },
-  loginButton: {
-  backgroundColor: '#007aff',
-  paddingVertical: 14,
-  borderRadius: 8,
-  alignItems: 'center',
-  marginTop: 10,
-},
-loginButtonText: {
-  color: '#fff',
-  fontSize: 16,
-  fontWeight: 'bold',
-},
-
-});
+const getStyles = (isDark) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      padding: 20,
+      justifyContent: 'center',
+      backgroundColor: '#121212',
+    },
+    logo: {
+      width: 120,
+      height: 120,
+      alignSelf: 'center',
+      marginBottom: 20,
+      resizeMode: 'contain',
+    },
+    title: {
+      fontSize: 28,
+      fontWeight: 'bold',
+      marginBottom: 20,
+      textAlign: 'center',
+      color: '#fff',
+    },
+    input: {
+      borderWidth: 1,
+      padding: 12,
+      marginBottom: 15,
+      borderRadius: 5,
+      borderColor: '#555',
+      backgroundColor: '#222b3a',
+      color: '#fff',
+    },
+    link: {
+      marginTop: 10,
+      color: '#5eb5ff',
+      textAlign: 'center',
+    },
+    forgetPasswordContainer: {
+      marginTop: 10,
+      alignItems: 'center',
+    },
+    loginButton: {
+      backgroundColor: '#185fcf',
+      paddingVertical: 14,
+      borderRadius: 8,
+      alignItems: 'center',
+      marginTop: 10,
+    },
+    loginButtonText: {
+      color: '#fff',
+      fontSize: 16,
+      fontWeight: 'bold',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
+    modalContainer: {
+      width: '80%',
+      backgroundColor: '#181f2a',
+      borderRadius: 8,
+      padding: 20,
+      elevation: 5,
+    },
+    modalTitle: {
+      fontSize: 20,
+      fontWeight: 'bold',
+      marginBottom: 15,
+      textAlign: 'center',
+      color: '#fff',
+    },
+    modalInput: {
+      borderWidth: 1,
+      padding: 10,
+      marginBottom: 15,
+      borderRadius: 5,
+      borderColor: '#555',
+      backgroundColor: '#222b3a',
+      color: '#fff',
+    },
+    modalButtonsContainer: {
+      flexDirection: 'row',
+      justifyContent: 'space-around',
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      backgroundColor: '#185fcf',
+      borderRadius: 5,
+    },
+    modalButtonText: {
+      color: '#fff',
+      fontWeight: 'bold',
+    },
+  });
 
 export default LoginScreen;

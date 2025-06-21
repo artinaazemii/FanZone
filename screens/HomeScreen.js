@@ -165,7 +165,7 @@ export default function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#121212',
     paddingTop: 16,
   },
   loader: {
@@ -176,18 +176,18 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   filterBtn: {
-    backgroundColor: '#ddd',
+    backgroundColor: '#2c2c2e',
     paddingVertical: 6,
     paddingHorizontal: 14,
     borderRadius: 20,
     marginRight: 8,
   },
   activeFilterBtn: {
-    backgroundColor: '#007aff',
+    backgroundColor: '#1e88e5',
   },
   filterText: {
     fontSize: 13,
-    color: '#333',
+    color: '#d1d1d6',
   },
   activeFilterText: {
     color: '#fff',
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 16,
     marginBottom: 8,
-    color: '#222',
+    color: '#fff',
   },
   subHeaderText: {
     fontSize: 18,
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     marginLeft: 16,
     marginTop: 24,
     marginBottom: 12,
-    color: '#222',
+    color: '#fff',
   },
   mainNewsCard: {
     marginHorizontal: 16,
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     marginTop: 8,
-    color: '#222',
+    color: '#fff',
   },
   metaRow: {
     flexDirection: 'row',
@@ -230,15 +230,15 @@ const styles = StyleSheet.create({
   },
   channelName: {
     fontSize: 13,
-    color: '#007aff',
+    color: '#1e88e5',
   },
   timeAgo: {
     fontSize: 13,
-    color: '#aaa',
+    color: '#999',
   },
   dot: {
     marginHorizontal: 6,
-    color: '#aaa',
+    color: '#999',
   },
   recommendScroll: {
     paddingLeft: 16,
@@ -246,13 +246,13 @@ const styles = StyleSheet.create({
   },
   recommendCardHorizontal: {
     width: 220,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     borderRadius: 12,
     marginRight: 12,
     padding: 10,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
+    shadowOpacity: 0.1,
     shadowRadius: 2,
     elevation: 2,
   },
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
   recommendTitleH: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#222',
+    color: '#fff',
     marginBottom: 4,
   },
   gamesGrid: {
@@ -276,7 +276,7 @@ const styles = StyleSheet.create({
   },
   gameCard: {
     flex: 1,
-    backgroundColor: '#222',
+    backgroundColor: '#2c2c2e',
     marginHorizontal: 6,
     borderRadius: 12,
     alignItems: 'center',
@@ -300,3 +300,4 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+

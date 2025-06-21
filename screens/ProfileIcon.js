@@ -58,22 +58,25 @@ const ProfileIcon = ({ size = 40, onPress }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { marginRight: 12 },
+  container: {
+    marginRight: 12,
+  },
   avatar: {
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: '#1e1e1e', // ose '#333' për kontrast të butë me sfondin e errët
   },
   defaultAvatar: {
-    backgroundColor: '#3498db',
+    backgroundColor: '#2d6cdf',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: '#1e1e1e',
   },
   defaultAvatarText: {
     color: '#fff',
     fontWeight: 'bold',
   },
 });
+
 
 export default ProfileIcon;

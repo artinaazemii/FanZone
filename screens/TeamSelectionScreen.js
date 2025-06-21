@@ -151,6 +151,8 @@ export default function TeamSelectionScreen() {
 
       /* navigo te tab-at kryesore */
       nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
+
+
     } catch (e) {
       console.error(e);
       Alert.alert('Error', 'Could not save');
@@ -181,7 +183,7 @@ export default function TeamSelectionScreen() {
               onPress={() => handleSelect(item)}
             >
               <Logo id={item.id} size={40} style={{ marginRight: 12 }} />
-              <Text>{item.name}</Text>
+              <Text style={{ color: '#fff' }}>{item.name}</Text>
             </TouchableOpacity>
           );
         }}
@@ -202,19 +204,47 @@ export default function TeamSelectionScreen() {
 
 /* --------------- styles --------------- */
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#f5f5f5' },
-  title:     { fontSize: 18, fontWeight: 'bold', marginBottom: 12 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#121212',
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 12,
+    color: '#fff',
+    textAlign: 'center',
+  },
   item: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 12,
-    backgroundColor: '#fff',
+    backgroundColor: '#1e1e1e',
     marginBottom: 8,
     borderRadius: 8,
   },
-  mainItem:   { borderWidth: 2, borderColor: '#3498db' },
-  followItem: { borderWidth: 1, borderColor: '#67c23a' },
-  button:   { backgroundColor: '#3498db', padding: 16, borderRadius: 8, alignItems: 'center' },
-  disabled:  { backgroundColor: '#999' },
-  btnText:   { color: '#fff', fontSize: 16 },
+  mainItem: {
+    borderWidth: 2,
+    borderColor: '#3498db',
+  },
+  followItem: {
+    borderWidth: 1,
+    borderColor: '#67c23a',
+  },
+  button: {
+    backgroundColor: '#3498db',
+    padding: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginTop: 12,
+  },
+  disabled: {
+    backgroundColor: '#444',
+  },
+  btnText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });

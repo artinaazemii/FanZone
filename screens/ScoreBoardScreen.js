@@ -199,9 +199,14 @@ const Scoreboard = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#eef2f5' },
+  container: {
+    flex: 1,
+    backgroundColor: '#121212',
+  },
 
-  header: { backgroundColor: '#fff' },
+  header: {
+    backgroundColor: '#1e1e1e',
+  },
 
   compBarContent: {
     paddingHorizontal: 8,
@@ -213,16 +218,24 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     paddingHorizontal: 12,
     borderRadius: 20,
-    backgroundColor: '#d0d0d0',
+    backgroundColor: '#2c2c2e',
   },
-  compBtnSel: { backgroundColor: '#1565c0' },
-  compText: { color: '#333', fontSize: 12 },
-  compTextSel: { color: '#fff', fontWeight: '600' },
+  compBtnSel: {
+    backgroundColor: '#1e88e5',
+  },
+  compText: {
+    color: '#d1d1d6',
+    fontSize: 12,
+  },
+  compTextSel: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 
   tabBar: {
     flexDirection: 'row',
     justifyContent: 'space-around',
-    backgroundColor: '#fafafa',
+    backgroundColor: '#1a1a1a',
     height: 40,
     alignItems: 'center',
   },
@@ -231,50 +244,108 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
   },
-  tabBtnSel: { borderBottomColor: '#1565c0' },
-  tabText: { fontSize: 14, color: '#555' },
-  tabTextSel: { color: '#1565c0', fontWeight: '600' },
+  tabBtnSel: {
+    borderBottomColor: '#1e88e5',
+  },
+  tabText: {
+    fontSize: 14,
+    color: '#aaa',
+  },
+  tabTextSel: {
+    color: '#1e88e5',
+    fontWeight: '600',
+  },
 
-  content: { flex: 1 },
-  list: { padding: 8, paddingBottom: 80 },
+  content: {
+    flex: 1,
+  },
+  list: {
+    padding: 8,
+    paddingBottom: 80,
+  },
 
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     borderRadius: 8,
     padding: 12,
     marginBottom: 8,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
-        shadowOpacity: 0.1,
+        shadowOpacity: 0.2,
         shadowRadius: 4,
         shadowOffset: { width: 0, height: 2 },
       },
       android: { elevation: 2 },
     }),
   },
-  cardLive: { borderLeftWidth: 4, borderLeftColor: '#d32f2f' },
+  cardLive: {
+    borderLeftWidth: 4,
+    borderLeftColor: '#d32f2f',
+  },
 
-  date: { fontSize: 12, color: '#666', marginBottom: 6, textAlign: 'center' },
+  date: {
+    fontSize: 12,
+    color: '#bbb',
+    marginBottom: 6,
+    textAlign: 'center',
+  },
 
   scoreRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     marginVertical: 2,
   },
-  team: { fontSize: 14, fontWeight: '600', color: '#333' },
-  score: { fontSize: 14, fontWeight: '700' },
+  team: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  score: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#fff',
+  },
 
-  status: { marginTop: 6, textAlign: 'center', fontSize: 12, fontWeight: '600' },
-  liveText: { color: '#d32f2f' },
-  finishedText: { color: '#388e3c' },
+  status: {
+    marginTop: 6,
+    textAlign: 'center',
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ccc',
+  },
+  liveText: {
+    color: '#ff5252',
+  },
+  finishedText: {
+    color: '#4caf50',
+  },
 
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  error: { color: 'red', marginBottom: 8 },
-  retryBtn: { backgroundColor: '#1565c0', padding: 10, borderRadius: 6 },
-  retryText: { color: '#fff', fontWeight: '600' },
+  center: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  error: {
+    color: '#ff6e6e',
+    marginBottom: 8,
+  },
+  retryBtn: {
+    backgroundColor: '#1e88e5',
+    padding: 10,
+    borderRadius: 6,
+  },
+  retryText: {
+    color: '#fff',
+    fontWeight: '600',
+  },
 
-  empty: { textAlign: 'center', color: '#777', marginTop: 20 },
+  empty: {
+    textAlign: 'center',
+    color: '#888',
+    marginTop: 20,
+  },
 });
+
 
 export default Scoreboard;

@@ -38,7 +38,7 @@ export default function GroupInfoScreen({ route }) {
 }
 
 const styles = StyleSheet.create({
-  container:{ flex:1, padding:16, backgroundColor:'#fff' },
+  container:{ flex:1, padding:16, backgroundColor:'#121212' },
   loader:   { flex:1, justifyContent:'center', alignItems:'center' },
   header:   { fontSize:20, fontWeight:'bold', marginBottom:12 },
   row:      { paddingVertical:10, borderBottomWidth:1, borderColor:'#eee' },

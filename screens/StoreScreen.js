@@ -38,7 +38,7 @@ export default function StoreScreen() {
       style={[styles.card, { width: cardWidth }]}
       onPress={() => navigation.navigate("TeamProducts", { teamName: item.name })}
     >
-      <Image source={require("../assets/jersey.png")} style={styles.image} />
+      <Image source={require("../assets/jersey2.png")} style={styles.image} />
       <Text style={styles.teamName}>{item.name}</Text>
     </TouchableOpacity>
   );
@@ -71,19 +71,20 @@ export default function StoreScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#121212",
     paddingTop: 16,
     paddingHorizontal: 16,
   },
   searchInput: {
-    backgroundColor: "#f2f2f2",
+    backgroundColor: "#1f1f1f",
     height: 42,
     borderRadius: 10,
     paddingHorizontal: 12,
     fontSize: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: "#333",
+    color: "#fff",
   },
   listContent: {
     paddingBottom: 30,
@@ -93,12 +94,12 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e1e1e",
     borderRadius: 14,
     paddingVertical: 20,
     alignItems: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.07,
+    shadowOpacity: 0.15,
     shadowRadius: 6,
     shadowOffset: { width: 0, height: 3 },
     elevation: 3,
@@ -112,12 +113,13 @@ const styles = StyleSheet.create({
   teamName: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#333",
+    color: "#f2f2f2",
   },
   emptyText: {
     textAlign: "center",
-    color: "#999",
+    color: "#888",
     fontSize: 14,
     marginTop: 30,
   },
 });
+

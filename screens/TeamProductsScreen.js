@@ -674,7 +674,10 @@ export default function TeamProductsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
+  container: {
+    flex: 1,
+    backgroundColor: "#121212",
+  },
   categoryRow: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -687,9 +690,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#555",
     marginBottom: 8,
-    backgroundColor: "#f7f7f7",
+    backgroundColor: "#1f1f1f",
     flexGrow: 1,
     marginHorizontal: 4,
     alignItems: "center",
@@ -700,32 +703,28 @@ const styles = StyleSheet.create({
   },
   categoryText: {
     fontSize: 13,
-    color: "#333",
+    color: "#ccc",
     fontWeight: "500",
   },
   categoryTextActive: {
     color: "#fff",
   },
   card: {
-    backgroundColor: "#fff",
+    backgroundColor: "#1e1e1e",
     borderRadius: 10,
     padding: 8,
     shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 3,
-    shadowOffset: { width: 0, height: 1 },
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
     alignItems: "center",
   },
-  
   image: {
     width: "100%",
     resizeMode: "contain",
     marginBottom: 6,
   },
-  
-  
-  
   topRow: {
     width: "100%",
     alignItems: "flex-end",
@@ -734,12 +733,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 13,
     fontWeight: "600",
-    color: "#333",
+    color: "#fff",
     marginBottom: 2,
     textAlign: "center",
   },
   priceBadge: {
-    backgroundColor: "#e0f7e9",
+    backgroundColor: "#2d4",
     borderColor: "#27ae60",
     borderWidth: 1,
     paddingHorizontal: 6,
@@ -749,11 +748,11 @@ const styles = StyleSheet.create({
   priceText: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#27ae60",
+    color: "#003300",
   },
   description: {
     fontSize: 11,
-    color: "#666",
+    color: "#bbb",
     marginBottom: 4,
     textAlign: "center",
   },
@@ -763,7 +762,7 @@ const styles = StyleSheet.create({
   },
   coinText: {
     fontSize: 11,
-    color: "#444",
+    color: "#aaa",
   },
   coinIcon: {
     width: 12,
@@ -772,3 +771,4 @@ const styles = StyleSheet.create({
     resizeMode: "contain",
   },
 });
+

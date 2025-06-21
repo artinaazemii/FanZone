@@ -11,16 +11,13 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { getFirestore, collection, addDoc, serverTimestamp } from 'firebase/firestore';
 import { auth } from '../firebaseConfig';
-
-/* NEW ─────────────────────────────────────────────── */
 import { useCoins } from '../context/CoinContext';
 
 export default function CartScreen() {
-  const route       = useRoute();
-  const navigation  = useNavigation();
-  const { coins, spendCoins } = useCoins();          // ⬅️ wallet access
+  const route = useRoute();
+  const navigation = useNavigation();
+  const { coins, spendCoins } = useCoins();
 
-  /* ───────── params from ProductDetailScreen ──────── */
   const {
     product,
     paymentMethod,
@@ -28,24 +25,21 @@ export default function CartScreen() {
     cartItems: incomingCartItems,
   } = route.params;
 
-  /* ───────── local state ──────── */
   const [deliveryDetails, setDeliveryDetails] = useState(incomingDeliveryDetails || {});
-  const [cartItems, setCartItems]             = useState(incomingCartItems || [{ size: 'M', quantity: 1 }]);
-  const [processing, setProcessing]           = useState(false);
+  const [cartItems, setCartItems] = useState(incomingCartItems || [{ size: 'M', quantity: 1 }]);
+  const [processing, setProcessing] = useState(false);
 
-  /* update delivery details when coming back from DeliveryDetails screen */
   useEffect(() => {
     if (route.params?.deliveryDetails) setDeliveryDetails(route.params.deliveryDetails);
   }, [route.params?.deliveryDetails]);
 
-  /* ───────── helpers ──────── */
-  const unitPrice  = paymentMethod === 'coins' ? product.coinPrice : product.price;
-  const unitCoins  = product.coinAmount;
+  const unitPrice = paymentMethod === 'coins' ? product.coinPrice : product.price;
+  const unitCoins = product.coinAmount;
   const totalPrice = cartItems.reduce((acc, i) => acc + i.quantity * unitPrice, 0);
   const totalCoins = cartItems.reduce((acc, i) => acc + i.quantity * unitCoins, 0);
 
   const deliveryCharge = 4.49;
-  const payableAmount  = totalPrice + deliveryCharge;
+  const payableAmount = totalPrice + deliveryCharge;
 
   const isDeliveryFilled =
     deliveryDetails?.name &&
@@ -55,7 +49,6 @@ export default function CartScreen() {
 
   const canAfford = paymentMethod === 'coins' ? coins >= totalCoins : true;
 
-  /* ───────── actions ──────── */
   const addAnotherSize = () => setCartItems((prev) => [...prev, { size: 'M', quantity: 1 }]);
 
   const handleCheckout = async () => {
@@ -67,8 +60,6 @@ export default function CartScreen() {
       Alert.alert('Insufficient Coins', `You need ${totalCoins} coins, but you only have ${coins}.`);
       return;
     }
-
-    /* pretend-stock check (optional) … removed for brevity */
 
     setProcessing(true);
     const db = getFirestore();
@@ -92,13 +83,12 @@ export default function CartScreen() {
         createdAt: serverTimestamp(),
       });
 
-      /* NEW – debit coins AFTER order saved */
       if (paymentMethod === 'coins') {
         await spendCoins(totalCoins);
       }
 
       Alert.alert('Success', 'Your order has been placed!');
-      navigation.popToTop();           // back to main tabs
+      navigation.popToTop();
     } catch (err) {
       console.error('Failed to save order:', err);
       Alert.alert('Error', 'Something went wrong while placing the order.');
@@ -107,10 +97,8 @@ export default function CartScreen() {
     }
   };
 
-  /* ───────── render ──────── */
   return (
     <ScrollView style={styles.container}>
-      {/* product thumb */}
       <View style={styles.productRow}>
         <Image source={product.image} style={styles.productImage} />
         <View style={{ flex: 1, paddingLeft: 12 }}>
@@ -120,7 +108,6 @@ export default function CartScreen() {
         </View>
       </View>
 
-      {/* cart items */}
       <Text style={styles.sectionTitle}>Your Selection</Text>
       {cartItems.map((item, index) => (
         <View key={index} style={{ marginBottom: 12 }}>
@@ -136,15 +123,21 @@ export default function CartScreen() {
                 }}
                 style={[
                   styles.sizeBtn,
-                  item.size === sz && { borderColor: '#000' },
+                  item.size === sz && { borderColor: '#fff' },
                 ]}
               >
-                <Text style={item.size === sz && { fontWeight: 'bold' }}>{sz}</Text>
+                <Text
+                  style={[
+                    styles.sizeOptionText,
+                    item.size === sz && styles.sizeOptionTextSelected,
+                  ]}
+                >
+                  {sz}
+                </Text>
               </TouchableOpacity>
             ))}
           </View>
 
-          {/* quantity */}
           <View style={styles.quantityWrapper}>
             <TouchableOpacity
               style={styles.qBtn}
@@ -154,7 +147,7 @@ export default function CartScreen() {
                 setCartItems(updated);
               }}
             >
-              <Text>-</Text>
+              <Text style={styles.qText}>-</Text>
             </TouchableOpacity>
             <Text style={styles.qValue}>{item.quantity}</Text>
             <TouchableOpacity
@@ -165,7 +158,7 @@ export default function CartScreen() {
                 setCartItems(updated);
               }}
             >
-              <Text>+</Text>
+              <Text style={styles.qText}>+</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -175,7 +168,6 @@ export default function CartScreen() {
         <Text style={styles.addText}>+ Add Another Size</Text>
       </TouchableOpacity>
 
-      {/* summary */}
       <Text style={styles.sectionTitle}>Order Summary</Text>
       <Row label="Total Items" value={cartItems.reduce((a, i) => a + i.quantity, 0)} />
       <Row label="Total Price" value={`${totalPrice.toFixed(2)}€`} />
@@ -183,11 +175,10 @@ export default function CartScreen() {
       <Row label="Delivery" value={`${deliveryCharge}€`} />
       <Row label="Payable" value={`${payableAmount.toFixed(2)}€`} />
 
-      {/* delivery */}
       <TouchableOpacity
         style={[
           styles.addDeliveryBtn,
-          isDeliveryFilled && { backgroundColor: '#d0f0c0', borderColor: 'green' },
+          isDeliveryFilled && { backgroundColor: '#27ae60'},
         ]}
         onPress={() =>
           navigation.navigate('DeliveryDetails', {
@@ -200,7 +191,7 @@ export default function CartScreen() {
         <Text
           style={[
             styles.addDeliveryText,
-            isDeliveryFilled && { color: 'green', fontWeight: 'bold' },
+            isDeliveryFilled && { color: '#fff', fontWeight: 'bold' },
           ]}
         >
           + Add Delivery Details
@@ -208,7 +199,6 @@ export default function CartScreen() {
       </TouchableOpacity>
       <Text style={styles.note}>*Delivery within 5-7 working days.</Text>
 
-      {/* checkout */}
       <TouchableOpacity
         style={[
           styles.checkoutButton,
@@ -231,48 +221,149 @@ export default function CartScreen() {
   );
 }
 
-/* simple row component */
 const Row = ({ label, value }) => (
   <View style={styles.summaryRow}>
-    <Text>{label}</Text>
-    <Text>{value}</Text>
+    <Text style={{ color: '#fff' }}>{label}</Text>
+    <Text style={{ color: '#fff' }}>{value}</Text>
   </View>
 );
 
-/* styles (mostly same as yours) */
 const styles = StyleSheet.create({
-  container: { padding: 16, backgroundColor: '#fff', flex: 1 },
-  productRow: { flexDirection: 'row', marginBottom: 16 },
-  productImage: { width: 100, height: 100, borderRadius: 20 },
-  productTitle: { fontWeight: 'bold', fontSize: 14, marginBottom: 4 },
-  sizeText: { fontSize: 13 },
-  sizeOptions: { flexDirection: 'row', marginTop: 6, marginBottom: 8 },
-  sizeBtn: { borderWidth: 1, borderColor: '#aaa', padding: 8, marginRight: 8, borderRadius: 6 },
+  container: {
+    flex: 1,
+    padding: 16,
+    backgroundColor: '#121212',
+  },
+  productRow: {
+    flexDirection: 'row',
+    marginBottom: 16,
+  },
+  productImage: {
+    width: 100,
+    height: 100,
+    borderRadius: 20,
+  },
+  productTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    marginBottom: 4,
+    color: '#fff',
+  },
+  sizeText: {
+    fontSize: 13,
+    color: '#ddd',
+  },
+  sizeOptions: {
+    flexDirection: 'row',
+    marginTop: 6,
+    marginBottom: 8,
+  },
+  sizeBtn: {
+    borderWidth: 1,
+    borderColor: '#888',
+    padding: 8,
+    marginRight: 8,
+    borderRadius: 6,
+    backgroundColor: '#1f1f1f',
+  },
+  sizeOptionText: {
+    color: '#ccc',
+  },
+  sizeOptionTextSelected: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
   quantityWrapper: {
-    flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: '#aaa',
-    borderRadius: 20, paddingHorizontal: 12, paddingVertical: 4, alignSelf: 'flex-start',
-    backgroundColor: '#fff', shadowColor: '#000', shadowOpacity: 0.1,
-    shadowOffset: { width: 0, height: 2 }, shadowRadius: 3, elevation: 3, marginTop: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#444',
+    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    alignSelf: 'flex-start',
+    backgroundColor: '#1e1e1e',
+    shadowColor: '#000',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 2 },
+    shadowRadius: 3,
+    elevation: 3,
+    marginTop: 4,
   },
-  qBtn: { paddingHorizontal: 10, paddingVertical: 2 },
-  qValue: { fontSize: 16, fontWeight: '600', marginHorizontal: 6 },
-  sectionTitle: { fontWeight: 'bold', fontSize: 16, marginTop: 20, marginBottom: 10 },
-  summaryRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  qBtn: {
+    paddingHorizontal: 10,
+    paddingVertical: 2,
+  },
+  qText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  qValue: {
+    fontSize: 16,
+    fontWeight: '600',
+    marginHorizontal: 6,
+    color: '#fff',
+  },
+  sectionTitle: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginTop: 20,
+    marginBottom: 10,
+    color: '#fff',
+  },
+  summaryRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 4,
+  },
   addBtn: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 12, borderWidth: 1, borderColor: '#aaa',
-    shadowOpacity: 0.1, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
-    elevation: 3, marginBottom: 12, alignItems: 'center',
+    backgroundColor: '#1f1f1f',
+    borderRadius: 20,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#666',
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 3,
+    marginBottom: 12,
+    alignItems: 'center',
   },
-  addText: { fontSize: 15 },
+  addText: {
+    fontSize: 15,
+    color: '#eee',
+  },
   addDeliveryBtn: {
-    backgroundColor: '#fff', borderRadius: 20, padding: 12, borderWidth: 1,
-    borderColor: '#aaa', marginTop: 20, alignItems: 'center',
+    backgroundColor: '#1f1f1f',
+    borderRadius: 20,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#666',
+    marginTop: 20,
+    alignItems: 'center',
   },
-  addDeliveryText: { fontSize: 15 },
-  note: { marginTop: 10, fontSize: 12, color: '#666', textAlign: 'center' },
+  addDeliveryText: {
+    fontSize: 15,
+    color: '#fff',
+  },
+  note: {
+    marginTop: 10,
+    fontSize: 12,
+    color: '#aaa',
+    textAlign: 'center',
+  },
   checkoutButton: {
-    backgroundColor: '#27ae60', marginTop: 20, paddingVertical: 12, borderRadius: 20,
-    alignItems: 'center', shadowOpacity: 0.2, shadowOffset: { width: 0, height: 4 }, elevation: 4,
+    backgroundColor: '#27ae60',
+    marginTop: 20,
+    paddingVertical: 12,
+    borderRadius: 20,
+    alignItems: 'center',
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 4,
   },
-  checkoutText: { color: '#fff', fontWeight: 'bold' },
+  checkoutText: {
+    color: '#fff',
+    fontWeight: 'bold',
+  },
 });

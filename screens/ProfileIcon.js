@@ -1,4 +1,3 @@
-// ProfileIcon.js
 import React, { useState, useEffect } from 'react';
 import {
   TouchableOpacity,
@@ -13,11 +12,11 @@ import { onAuthStateChanged } from 'firebase/auth';
 
 const ProfileIcon = ({ size = 40, onPress }) => {
   const navigation = useNavigation();
-  // keep local copy of photoURL
+
   const [photoURL, setPhotoURL] = useState(auth.currentUser?.photoURL);
 
   useEffect(() => {
-    // subscribe to any changes (including updateProfile)
+   
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setPhotoURL(user?.photoURL);
     });
@@ -63,7 +62,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     borderWidth: 2,
-    borderColor: '#1e1e1e', // ose '#333' për kontrast të butë me sfondin e errët
+    borderColor: '#1e1e1e',
   },
   defaultAvatar: {
     backgroundColor: '#2d6cdf',

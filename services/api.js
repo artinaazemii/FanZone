@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_KEY = 'YOUR_API_KEY'; // Replace with your actual key
+const API_KEY = 'YOUR_API_KEY'; 
 const BASE_URL = '833e9df22ebde8b6f2037fbcf67055fd';
 
 const api = axios.create({

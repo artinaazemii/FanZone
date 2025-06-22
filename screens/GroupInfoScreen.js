@@ -1,4 +1,3 @@
-// screens/GroupInfoScreen.js
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { db }          from '../firebaseConfig';

@@ -7,13 +7,12 @@ import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/aut
 import { auth } from '../firebaseConfig';
 
 const LoginScreen = ({ navigation }) => {
-  // Dark mode is always ON
+ 
   const isDark = true;
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  // States for Android password reset modal
   const [resetModalVisible, setResetModalVisible] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
 

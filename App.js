@@ -4,7 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { onAuthStateChanged } from 'firebase/auth';
 import { onSnapshot, doc } from 'firebase/firestore';
-import { GestureHandlerRootView } from 'react-native-gesture-handler'; // ← SHTO KËTË
+import { GestureHandlerRootView } from 'react-native-gesture-handler'; 
 
 import { auth, db } from './firebaseConfig';
 

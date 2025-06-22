@@ -8,7 +8,7 @@ import {
   SafeAreaView,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useCoins } from '../context/CoinContext'; // Make sure the path is correct
+import { useCoins } from '../context/CoinContext';
 
 export default function QuizzesScreen({ navigation }) {
   const [activeTab, setActiveTab] = useState('quizzes');
@@ -48,7 +48,7 @@ export default function QuizzesScreen({ navigation }) {
     }
   };
 
-  // ------------------ QUIZ DATA ------------------------
+  
   const quizzes = [
     {
       id: 1,
@@ -247,7 +247,7 @@ export default function QuizzesScreen({ navigation }) {
     }
   ];
 
-  // --- Achievements Logic ---
+
   const getAchievements = () => {
     let achievements = [];
     const perfectCount = perfectQuizzes.length;
@@ -340,7 +340,6 @@ export default function QuizzesScreen({ navigation }) {
     );
   };
 
-  // --- UI for coins, achievements ---
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
@@ -426,9 +425,9 @@ export default function QuizzesScreen({ navigation }) {
   );
 }
 
-// --- Add these to your existing styles:
+
 const styles = StyleSheet.create({
-  // ... everything from before ...
+
   container: { flex: 1, backgroundColor: '#000' },
   header: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 16, },
   backButton: { marginRight: 16, },
@@ -436,7 +435,6 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#fff', flex: 1 },
   coinBox: { backgroundColor: '#222', borderRadius: 12, paddingHorizontal: 12, paddingVertical: 4, marginLeft: 12 },
   coinText: { color: '#FFD700', fontWeight: 'bold', fontSize: 18 },
-  // ... all your old styles here ...
   tabContainer: { flexDirection: 'row', marginHorizontal: 16, marginBottom: 24, backgroundColor: '#333', borderRadius: 25, padding: 4, },
   tab: { flex: 1, paddingVertical: 12, borderRadius: 20, alignItems: 'center', },
   activeTab: { backgroundColor: '#555', },

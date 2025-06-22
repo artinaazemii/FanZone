@@ -1,4 +1,3 @@
-// src/components/TeamLogo.js
 import React from 'react';
 import { Image } from 'react-native';
 import { SvgUri } from 'react-native-svg';

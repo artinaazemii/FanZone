@@ -31,7 +31,7 @@ if (Platform.OS === "web") {
       persistence: getReactNativePersistence(AsyncStorage)
     });
   } catch (e) {
-    auth = getAuth(app); // already initialized
+    auth = getAuth(app); 
   }
 }
 

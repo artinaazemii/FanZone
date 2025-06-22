@@ -18,7 +18,7 @@ export default function ProductDetailScreen() {
   const route      = useRoute();
   const product    = route.params.product;
 
-  const { coins }  = useCoins();                    // ⬅️ only read here
+  const { coins }  = useCoins();                  
   const canAfford  = coins >= product.coinAmount;
 
   const [selectedSize, setSelectedSize]   = useState('M');
@@ -33,8 +33,8 @@ export default function ProductDetailScreen() {
     navigation.navigate('Cart', {
       product,
       size: selectedSize,
-      paymentMethod: method,            // 'coins' or 'euro'
-      coinAmount: product.coinAmount,   // keep the amount for later debit
+      paymentMethod: method,           
+      coinAmount: product.coinAmount,   
     });
   };
 
@@ -46,7 +46,7 @@ export default function ProductDetailScreen() {
       </Text>
       <Text style={styles.description}>{product.description}</Text>
 
-      {/* size selector */}
+     
       <TouchableOpacity
         style={styles.sizeDropdown}
         onPress={() => setSizeModalVisible(true)}
@@ -72,7 +72,7 @@ export default function ProductDetailScreen() {
         </TouchableOpacity>
       </Modal>
 
-      {/* purchase buttons */}
+    
       <View style={styles.buttonContainer}>
         <TouchableOpacity
           style={[styles.coinButton, !canAfford && { opacity: 0.4 }]}
@@ -100,7 +100,7 @@ export default function ProductDetailScreen() {
   );
 }
 
-/* styles unchanged … */
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,

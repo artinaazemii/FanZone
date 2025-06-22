@@ -182,7 +182,6 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginRight: 8,
   },
-  // 👇 NEW: White background for selected, no more blue
   activeFilterBtn: {
     backgroundColor: '#fff',
   },
@@ -190,7 +189,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#d1d1d6',
   },
-  // 👇 NEW: Black, bold text when selected
   activeFilterText: {
     color: '#121212',
     fontWeight: 'bold',

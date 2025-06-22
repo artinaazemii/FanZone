@@ -35,7 +35,6 @@ const coin = require('../assets/coin.png');
 const Tab   = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
-/* ─────── HEADER HELPERS ─────── */
 function CoinBadge() {
   const { coins } = useCoins();
   return (
@@ -48,7 +47,6 @@ function CoinBadge() {
   );
 }
 
-// Coins + ONLY Team logo on Home header (no name)
 const CoinsAndTeam = () => {
   const { mainTeam } = useTeam();
   return (
@@ -69,7 +67,6 @@ const HeaderRight = () => (
   </View>
 );
 
-/* ─────── STORE HEADER ─────── */
 const StoreHeaderTitle = () => (
   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
     <ProfileIcon size={28} style={{ marginRight: 10 }} />
@@ -79,15 +76,12 @@ const StoreHeaderTitle = () => (
   </View>
 );
 
-// --- FIX APPLIED HERE ---
 const StoreHeaderRight = () => (
   <View style={{ marginRight: 16 }}>
     <CoinBadge />
   </View>
 );
-// --- END FIX ---
 
-/* ─────── TABS (blur footer) ─────── */
 function Tabs() {
   return (
     <Tab.Navigator
@@ -155,7 +149,7 @@ function Tabs() {
         component={StoreScreen}
         options={{
           headerTitle: StoreHeaderTitle,
-          headerRight: StoreHeaderRight, // 👈 now spaced from border
+          headerRight: StoreHeaderRight, 
           headerTitleAlign: 'left',
           headerLeft: () => null,
         }}
@@ -164,7 +158,6 @@ function Tabs() {
   );
 }
 
-// Accept mainTeam as prop and update context!
 export default function NavigationTabs({ mainTeam }) {
   const { setMainTeam } = useTeam();
   useEffect(() => {
@@ -181,7 +174,7 @@ export default function NavigationTabs({ mainTeam }) {
       }}
     >
       <Stack.Screen name="MainTabs" component={Tabs} options={{ headerShown: false }} />
-      {/* Other stack screens... */}
+
       <Stack.Screen name="MatchingPairs" component={MatchingPairsScreen} options={{ headerShown: false }} />
       <Stack.Screen name="Quizzes"       component={QuizzesScreen}       options={{ headerShown: false }} />
       <Stack.Screen
@@ -286,7 +279,7 @@ export default function NavigationTabs({ mainTeam }) {
 }
 
 const styles = StyleSheet.create({
-  // Header styles
+ 
   headerStyle: {
     backgroundColor: '#000000',
     borderBottomWidth: 1,
@@ -301,7 +294,7 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   
-  // Tab bar styles
+
   tabBarStyle: {
     backgroundColor: '#000000',
     borderTopWidth: 1,
@@ -319,7 +312,6 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   
-  // Coin badge styles
   coinBadge: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -341,14 +333,12 @@ const styles = StyleSheet.create({
     height: 16,
   },
   
-  // Header container styles
   headerRightContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     marginRight: 15,
   },
   
-  // Home screen specific styles
   homeTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -362,8 +352,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginLeft: 4,
   },
-  
-  // Utility styles
+
   teamLogo: {
     marginLeft: 12,
   },

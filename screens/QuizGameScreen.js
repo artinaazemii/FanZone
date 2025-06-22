@@ -1,4 +1,3 @@
-// QuizGameScreen.js
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -30,7 +29,6 @@ export default function QuizGameScreen({ route, navigation }) {
   const isLastQuestion = currentQuestionIndex === questions.length - 1;
   const currentQuestion = questions[currentQuestionIndex];
 
-  // Start/reset timer on question change
   useEffect(() => {
     setTimeLeft(QUESTION_TIME);
     if (timerRef.current) clearInterval(timerRef.current);
@@ -55,7 +53,7 @@ export default function QuizGameScreen({ route, navigation }) {
     clearInterval(timerRef.current);
     const sel = selectedAnswer;
     if (sel === null) {
-      // auto-mark incorrect if timed out
+     
     }
     const isCorrect = sel === currentQuestion.correct;
     setUserAnswers(prev => [
@@ -118,7 +116,7 @@ export default function QuizGameScreen({ route, navigation }) {
     );
   }
 
-  // Quiz view
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>

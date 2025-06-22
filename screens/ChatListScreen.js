@@ -1,4 +1,3 @@
-// screens/ChatListScreen.js
 import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
@@ -18,12 +17,10 @@ import {
 } from 'firebase/firestore';
 import Logo from './Logo';
 
-/*  🔗  imazhi statik –  **require**, JO import default  */
-const BgImage = require('../assets/background.jpeg');  // ← ndrysho .png nëse skedari yt është png
+const BgImage = require('../assets/background.jpeg');  
 
 const ADMIN_UID = 'k7CSHSfyfIdycjostOnX0SoHF4w1';
 
-/* ───────── listë e plotë ekipesh (56) ───────── */
 const TEAMS = [
   { id: '1',  name: 'Manchester United' },
   { id: '2',  name: 'Barcelona' },
@@ -82,8 +79,6 @@ const TEAMS = [
   { id: '55', name: 'Kaizer Chiefs' },
   { id: '56', name: 'Orlando Pirates' },
 ];
-
-/* helper-at për Firestore (pa ndryshim) --------------------------- */
 async function ensureChatDoc(team) {
   const ref = doc(db, 'teamChats', team.id);
   const s   = await getDoc(ref);

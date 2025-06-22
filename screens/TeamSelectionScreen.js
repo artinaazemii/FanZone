@@ -18,7 +18,7 @@ import {
   deleteDoc,
 } from 'firebase/firestore';
 import Logo from './Logo';
-// Add this:
+
 import { useTeam } from '../context/TeamContext';
 
 const TEAMS = [
@@ -86,12 +86,11 @@ export default function TeamSelectionScreen() {
   const [loading, setLoading] = useState(false);
   const nav = useNavigation();
 
-  // Context for sharing team selection globally
   const { setMainTeam: setMainTeamContext } = useTeam();
 
   const handleSelect = (t) => {
-    if (!mainTeam) return setMainTeam(t);                // select main
-    if (mainTeam.id === t.id) return setMainTeam(null);  // unselect main
+    if (!mainTeam) return setMainTeam(t);                
+    if (mainTeam.id === t.id) return setMainTeam(null);  
 
     const exists = following.some((f) => f.id === t.id);
     if (exists) return setFollowing(following.filter((f) => f.id !== t.id));
@@ -108,12 +107,11 @@ export default function TeamSelectionScreen() {
     const uid = auth.currentUser.uid;
 
     try {
-      // Existing teams before change
+
       const oldSnap = await getDoc(doc(db, 'users', uid));
       const oldMain   = oldSnap.exists() ? oldSnap.data().mainTeam : null;
       const oldFollow = oldSnap.exists() ? oldSnap.data().followingTeams ?? [] : [];
 
-      // Save new teams to user document
       await setDoc(
         doc(db, 'users', uid),
         {
@@ -124,7 +122,6 @@ export default function TeamSelectionScreen() {
         { merge: true }
       );
 
-      // Add user as participant in new teams
       const participant = {
         uid,
         name: auth.currentUser.displayName || auth.currentUser.email,
@@ -140,7 +137,6 @@ export default function TeamSelectionScreen() {
         )
       );
 
-      // Remove user from teams they no longer belong to
       const removed = [
         ...(oldMain && oldMain.id !== mainTeam.id ? [oldMain] : []),
         ...oldFollow.filter((t) => !newTeams.some((n) => n.id === t.id)),
@@ -151,7 +147,6 @@ export default function TeamSelectionScreen() {
         )
       );
 
-      // Save mainTeam to global context for header use!
       setMainTeamContext(mainTeam);
 
       nav.reset({ index: 0, routes: [{ name: 'MainTabs' }] });

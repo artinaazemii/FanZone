@@ -18,10 +18,6 @@ const CATEGORIES = [
   { key: "third", label: "Third Kit" },
   { key: "goalkeeper", label: "Goalkeeper Kit" },
 ];
-
-
-
-
 const productsData = {
   Barcelona: [
     {

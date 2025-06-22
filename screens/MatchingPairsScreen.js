@@ -21,7 +21,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage"
 
 const { width } = Dimensions.get("window")
 
-// Best European teams data with badge images
 const europeanTeams = [
   {
     name: "Real Madrid",
@@ -116,7 +115,6 @@ export default function MatchingPairsScreen() {
   const [cardFlipAnimations, setCardFlipAnimations] = useState({})
   const [cooldownEndTime, setCooldownEndTime] = useState(null)
 
-  // Entrance animations
   const fadeAnim = useRef(new Animated.Value(0)).current
   const slideAnim = useRef(new Animated.Value(50)).current
   const scaleAnim = useRef(new Animated.Value(0.8)).current
@@ -141,7 +139,6 @@ export default function MatchingPairsScreen() {
     checkCooldown()
   }, [])
 
-  // Check cooldown on component mount
   const checkCooldown = async () => {
     try {
       const cooldownData = await AsyncStorage.getItem(COOLDOWN_KEY)
@@ -157,8 +154,6 @@ export default function MatchingPairsScreen() {
       console.error("Error checking cooldown:", error)
     }
   }
-
-  // Set cooldown after playing coin mode
   const setCooldown = async () => {
     try {
       const endTime = Date.now() + COOLDOWN_HOURS * 60 * 60 * 1000
@@ -168,13 +163,9 @@ export default function MatchingPairsScreen() {
       console.error("Error setting cooldown:", error)
     }
   }
-
-  // Check if user can play coin mode
   const canPlayCoinMode = () => {
     return coins >= 10 && (!cooldownEndTime || Date.now() >= cooldownEndTime)
   }
-
-  // Get remaining cooldown time
   const getRemainingCooldownTime = () => {
     if (!cooldownEndTime) return null
     const remaining = cooldownEndTime - Date.now()
@@ -185,7 +176,6 @@ export default function MatchingPairsScreen() {
     return `${hours}h ${minutes}m`
   }
 
-  // Initialize game
   const initializeGame = async (selectedMode) => {
     const gameCards = []
     europeanTeams.slice(0, 12).forEach((team, index) => {
@@ -202,20 +192,16 @@ export default function MatchingPairsScreen() {
     setGameMode(selectedMode)
     setGameActive(true)
     setGameStarted(true)
-
-    // Spend coins and set cooldown for coin mode
     if (selectedMode === "coins") {
       await spendCoins(10)
       await setCooldown()
     }
 
-    // Initialize flip animations
     const animations = {}
     shuffled.forEach((c) => (animations[c.id] = new Animated.Value(0)))
     setCardFlipAnimations(animations)
   }
 
-  // Timer
   useEffect(() => {
     let interval
     if (gameActive && timer > 0) {
@@ -226,7 +212,6 @@ export default function MatchingPairsScreen() {
     return () => clearInterval(interval)
   }, [gameActive, timer, gameStarted])
 
-  // Handle flips & matches
   const handleCardFlip = (cardId) => {
     if (!gameActive || flippedCards.length >= 2) return
     const card = cards.find((c) => c.id === cardId)
@@ -265,7 +250,6 @@ export default function MatchingPairsScreen() {
     }
   }
 
-  // Award 20 coins on completion in coin mode
   useEffect(() => {
     if (
       !gameActive &&
@@ -309,7 +293,6 @@ export default function MatchingPairsScreen() {
       </View>
     )
 
-  // Menu Screen
   if (currentScreen === "menu") {
     return (
       <ImageBackground
@@ -341,7 +324,6 @@ export default function MatchingPairsScreen() {
               The objective is to collect the most pairs of cards. Watch out, time is limited
             </Text>
 
-            {/* Cooldown indicator for coin mode */}
             {cooldownEndTime && Date.now() < cooldownEndTime && (
               <View style={styles.cooldownContainer}>
                 <Text style={styles.cooldownText}>⏰ Coin mode available in: {getRemainingCooldownTime()}</Text>
@@ -364,7 +346,7 @@ export default function MatchingPairsScreen() {
           </View>
         </Animated.View>
 
-        {/* Guide Modal */}
+    
         <Modal visible={showGuide} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
             <View style={styles.modernModal}>
@@ -430,7 +412,6 @@ export default function MatchingPairsScreen() {
     )
   }
 
-  // Mode Selection Screen
   if (currentScreen === "mode-select") {
     return (
       <ImageBackground
@@ -502,13 +483,12 @@ export default function MatchingPairsScreen() {
     )
   }
 
-  // Game Screen
   return (
     <View style={styles.gameContainer}>
       <StatusBar barStyle="light-content" backgroundColor="#1a2332" />
 
       <Animated.View style={[styles.gameContent, { opacity: fadeAnim }]}>
-        {/* Game Header */}
+     
         <View style={styles.gameHeader}>
           <TouchableOpacity onPress={goBack} style={styles.gameBackButton}>
             <Text style={styles.gameBackText}>←</Text>
@@ -534,7 +514,6 @@ export default function MatchingPairsScreen() {
           </View>
         </View>
 
-        {/* Progress Bar */}
         <View style={styles.progressContainer}>
           <View style={styles.progressBar}>
             <View style={[styles.progressFill, { width: `${(matchedCards.length / 24) * 100}%` }]} />
@@ -542,7 +521,6 @@ export default function MatchingPairsScreen() {
           <Text style={styles.progressText}>{matchedCards.length / 2}/12 pairs found</Text>
         </View>
 
-        {/* Game Grid */}
         <ScrollView
           style={styles.gameScrollView}
           contentContainerStyle={styles.gameGridContainer}
@@ -623,7 +601,6 @@ export default function MatchingPairsScreen() {
         </ScrollView>
       </Animated.View>
 
-      {/* Game Over Modal */}
       {!gameActive && gameStarted && (
         <Modal visible={true} transparent={true} animationType="fade">
           <View style={styles.modalOverlay}>
@@ -1231,27 +1208,27 @@ statsLabel: {
   backgroundColor: "rgba(25, 118, 210, 0.07)",
   borderRadius: 16,
   paddingVertical: 20,
-  paddingHorizontal: 8, // NEW: a bit of horizontal space
-  gap: 0,               // NEW: let children control their own space
+  paddingHorizontal: 8, 
+  gap: 0,               
 },
 finalStatItem: {
   alignItems: "center",
-  flex: 1,                // NEW: columns take equal space
-  minWidth: 90,           // NEW: minimum width for clarity
+  flex: 1,              
+  minWidth: 90,          
 },
 finalStatNumber: {
-  fontSize: 28,           // Slightly larger number
+  fontSize: 28,        
   fontWeight: "bold",
   color: "#1976d2",
   marginBottom: 4,
-  lineHeight: 34,         // More vertical room
+  lineHeight: 34,         
 },
 finalStatLabel: {
   fontSize: 12,
   color: "#666",
   textTransform: "uppercase",
   letterSpacing: 1,
-  marginTop: 2,           // Space above label
+  marginTop: 2,          
 },
 
   gameOverButtons: {

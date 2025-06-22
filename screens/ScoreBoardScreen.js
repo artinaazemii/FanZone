@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     backgroundColor: '#2c2c2e',
   },
-  // ---- NEW!
+ 
   compBtnSel: {
     backgroundColor: '#fff',
   },
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
     color: '#d1d1d6',
     fontSize: 12,
   },
-  // ---- NEW!
+
   compTextSel: {
     color: '#121212',
     fontWeight: 'bold',

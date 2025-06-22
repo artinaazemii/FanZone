@@ -79,7 +79,7 @@ export default function ProfileScreen() {
   const [showTeams, setShowTeams] = useState(false);
   const [temp, setTemp] = useState({ mainTeam: null, followingTeams: [] });
 
-  /* ───────── ngarkimi fillestar ───────── */
+
   useEffect(() => {
     (async () => {
       try {
@@ -163,7 +163,7 @@ export default function ProfileScreen() {
     const newTeams  = [temp.mainTeam, ...temp.followingTeams];
 
     try {
-      /* update user doc */
+   
       await updateDoc(doc(db, 'users', uid), {
         mainTeam: temp.mainTeam,
         followingTeams: temp.followingTeams,
@@ -176,7 +176,7 @@ export default function ProfileScreen() {
       }));
       setShowTeams(false);
 
-      /* teams added / removed */
+      
       const removed = [
         ...(oldMain && !newTeams.some((t) => t.id === oldMain.id) ? [oldMain] : []),
         ...oldFollow.filter((t) => !newTeams.some((n) => n.id === t.id)),
@@ -185,14 +185,13 @@ export default function ProfileScreen() {
         (t) => ![oldMain, ...oldFollow].some((o) => o?.id === t.id)
       );
 
-      /* leave removed teams */
+ 
       await Promise.all(
         removed.map((team) =>
           deleteDoc(doc(db, 'teamChats', team.id, 'members', uid)).catch(() => {})
         )
       );
 
-      /* join added teams */
       const participant = {
         displayName: auth.currentUser.displayName || auth.currentUser.email,
         joinedAt: serverTimestamp(),
@@ -211,7 +210,6 @@ export default function ProfileScreen() {
     }
   };
 
-  /* ───────── UI ───────── */
   if (loading) {
     return (
       <View style={styles.loadingContainer}>
@@ -316,7 +314,7 @@ export default function ProfileScreen() {
         <Text style={styles.signOutButtonText}>Sign Out</Text>
       </TouchableOpacity>
 
-      {/* ───────── Modal Name ───────── */}
+
       <Modal visible={showName} animationType="fade" transparent onRequestClose={() => setShowName(false)}>
         <View style={styles.nameBackdrop}>
           <View style={styles.nameCard}>
@@ -347,7 +345,7 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
-      {/* ───────── Modal Teams ───────── */}
+    
       <Modal
         visible={showTeams}
         animationType="slide"
@@ -416,7 +414,7 @@ export default function ProfileScreen() {
   );
 }
 
-/* ───────── styles ───────── */
+
 const styles = StyleSheet.create({
   container: { 
     flex: 1, 
@@ -585,7 +583,7 @@ const styles = StyleSheet.create({
     color: '#ffffff' 
   },
 
-  /* other buttons */
+
   changePasswordButton: {
     margin: 16, 
     backgroundColor: '#1a1a1a', 
@@ -615,7 +613,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' 
   },
 
-  /* modal name */
   nameBackdrop: { 
     flex: 1, 
     backgroundColor: 'rgba(0,0,0,0.8)', 
@@ -671,7 +668,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold' 
   },
 
-  /* modal teams */
+
   modalContainer: { 
     flex: 1, 
     padding: 16, 
